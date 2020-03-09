@@ -21,6 +21,8 @@
             </intent-filter>
         </activity>
 
+        <activity android:name="sh.bourbon.gist.presentation.GistActivity" />
+
     </application>
 
 </manifest>
