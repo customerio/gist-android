@@ -65,7 +65,7 @@ class GistActivity : AppCompatActivity() {
             )
         )
 
-        engineView.updateRoute(messageId, RouteBehavior.SYSTEM)
+        engineView.updateRoute(messageId, RouteBehavior.RETAIN)
     }
 
     private fun createArgException(): Exception {
