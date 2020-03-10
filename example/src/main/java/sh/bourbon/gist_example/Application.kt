@@ -12,6 +12,6 @@ class Application : Application() {
         GistSdk.init(this, BuildConfig.ORGANIZATION_ID)
 
         // Set current user ID
-        GistSdk.setUserId(BuildConfig.USER_ID)
+        GistSdk.setUserToken(BuildConfig.USER_ID)
     }
 }

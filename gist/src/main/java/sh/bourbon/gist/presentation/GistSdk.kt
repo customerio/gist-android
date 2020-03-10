@@ -1,9 +1,11 @@
 package sh.bourbon.gist.presentation
 
 import android.content.Context
+import android.content.Context.MODE_PRIVATE
 import android.content.Intent
 import android.util.Log
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -17,6 +19,8 @@ import sh.bourbon.gist.data.repository.GistService
 object GistSdk {
 
     private const val ORGANIZATION_ID_HEADER = "X-Bourbon-Organization-Id"
+    private const val SHARED_PREFERENCES_NAME = "gist-sdk"
+    private const val SHARED_PREFERENCES_USER_TOKEN_KEY = "userToken"
 
     private val tag by lazy { this::class.java.simpleName }
 
@@ -39,11 +43,15 @@ object GistSdk {
             .create(GistService::class.java)
     }
 
+    private val sharedPreferences by lazy {
+        context.getSharedPreferences(SHARED_PREFERENCES_NAME, MODE_PRIVATE)
+    }
+
     private lateinit var organizationId: String
     private lateinit var context: Context
 
+    private var observeUserMessagesJob: Job? = null
     private var configuration: Configuration? = null
-
     private var isInitialized = false
 
     fun init(context: Context, organizationId: String) {
@@ -53,27 +61,22 @@ object GistSdk {
 
         GlobalScope.launch {
             try {
+                // Pre-fetch configuration
                 gistService.fetchConfiguration()
+
+                // Observe user messages if user token is set
+                getUserToken()?.let { userToken -> observeMessagesForUser(userToken) }
             } catch (e: Exception) {
                 Log.e(tag, "Failed to fetch configuration: ${e.message}", e)
             }
         }
     }
 
-    fun setUserId(userId: String) {
+    fun setUserToken(userToken: String) {
         ensureInitialized()
 
-        GlobalScope.launch {
-            try {
-                val configuration = getConfiguration()
-
-                // TODO: This should be changed to poll every 10s
-                val latestMessages = gistService.fetchMessagesForUser(userId)
-                showMessage(configuration, latestMessages.first().messageId)
-            } catch (e: Exception) {
-                Log.e(tag, "Failed to fetch latest messages: ${e.message}", e)
-            }
-        }
+        sharedPreferences.edit().putString(SHARED_PREFERENCES_USER_TOKEN_KEY, userToken).apply()
+        observeMessagesForUser(userToken)
     }
 
     fun showMessage(messageId: String) {
@@ -118,6 +121,25 @@ object GistSdk {
         } catch (e: Exception) {
             throw Exception("Failed to fetch configuration: ${e.message}", e)
         }
+    }
+
+    private fun observeMessagesForUser(userToken: String) {
+        observeUserMessagesJob?.cancel()
+        observeUserMessagesJob = GlobalScope.launch {
+            try {
+                val configuration = getConfiguration()
+
+                // TODO: This should poll every 10s, except for when a message is shown
+                val latestMessages = gistService.fetchMessagesForUser(userToken)
+                showMessage(configuration, latestMessages.first().messageId)
+            } catch (e: Exception) {
+                Log.e(tag, "Failed to fetch latest messages: ${e.message}", e)
+            }
+        }
+    }
+
+    private fun getUserToken(): String? {
+        return sharedPreferences.getString(SHARED_PREFERENCES_USER_TOKEN_KEY, null)
     }
 
     private fun ensureInitialized() {
