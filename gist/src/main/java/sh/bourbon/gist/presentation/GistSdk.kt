@@ -9,13 +9,13 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import sh.bourbon.gist.BuildConfig
 import sh.bourbon.gist.data.model.Configuration
 import sh.bourbon.gist.data.repository.GistService
 
 
 object GistSdk {
 
-    private const val BASE_URL = "https://gist-api.dev.bourbon.sh"
     private const val ORGANIZATION_ID_HEADER = "X-Bourbon-Organization-Id"
 
     private val tag by lazy { this::class.java.simpleName }
@@ -32,7 +32,7 @@ object GistSdk {
             .build()
 
         Retrofit.Builder()
-            .baseUrl(BASE_URL)
+            .baseUrl(BuildConfig.API_URL)
             .addConverterFactory(GsonConverterFactory.create())
             .client(httpClient)
             .build()
