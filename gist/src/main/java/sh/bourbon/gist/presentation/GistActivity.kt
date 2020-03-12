@@ -3,6 +3,8 @@ package sh.bourbon.gist.presentation
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
+import android.view.animation.AnimationUtils
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_gist.*
 import sh.bourbon.engine.BourbonEngineListener
@@ -68,6 +70,8 @@ class GistActivity : AppCompatActivity() {
         )
 
         engineView.setListener(object : BourbonEngineListener {
+            var isInitialLoad = true
+
             override fun onBootstrapped() {
                 engineView.updateRoute(messageId, RouteBehaviour.RETAIN)
             }
@@ -79,11 +83,23 @@ class GistActivity : AppCompatActivity() {
             }
 
             override fun onRouteLoaded(route: String) {
+                if (isInitialLoad) {
+                    isInitialLoad = false
+                    animateEngineEnter()
+                }
             }
 
             override fun onTap(action: String) {
             }
         })
+    }
+
+    private fun animateEngineEnter() {
+        val slideUp = AnimationUtils.loadAnimation(this@GistActivity, R.anim.anim_in)
+        slideUp.startOffset = 1_000 // Offset animation to avoid TextureView jitter
+
+        engineView.visibility = View.VISIBLE
+        engineView.startAnimation(slideUp)
     }
 
     private fun createArgException(): Exception {
