@@ -2,14 +2,14 @@ package sh.bourbon.gist.presentation
 
 import android.content.Context
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_gist.*
+import sh.bourbon.engine.BourbonEngineListener
 import sh.bourbon.engine.EngineConfiguration
-import sh.bourbon.engine.RouteBehavior
+import sh.bourbon.engine.RouteBehaviour
 import sh.bourbon.gist.R
-import java.lang.Exception
-import java.lang.IllegalArgumentException
+
 
 // TODO: Mark messages as seen when done
 class GistActivity : AppCompatActivity() {
@@ -17,8 +17,8 @@ class GistActivity : AppCompatActivity() {
     companion object {
         private const val EXTRA_ORGANIZATION_ID = "EXTRA_ORGANIZATION_ID"
         private const val EXTRA_PROJECT_ID = "EXTRA_PROJECT_ID"
-        private const val EXTRA_ENGINE_ENDPOINT = "EXTRA_PROJECT_ID"
-        private const val EXTRA_IDENTITY_ENDPOINT = "EXTRA_PROJECT_ID"
+        private const val EXTRA_ENGINE_ENDPOINT = "EXTRA_ENGINE_ENDPOINT"
+        private const val EXTRA_IDENTITY_ENDPOINT = "EXTRA_IDENTITY_ENDPOINT"
         private const val EXTRA_MESSAGE_ID = "EXTRA_MESSAGE_ID"
 
         fun newIntent(
@@ -41,6 +41,8 @@ class GistActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        setTheme(R.style.GistActivityTheme)
         setContentView(R.layout.activity_gist)
 
         val organizationId =
@@ -65,7 +67,23 @@ class GistActivity : AppCompatActivity() {
             )
         )
 
-        engineView.updateRoute(messageId, RouteBehavior.RETAIN)
+        engineView.setListener(object : BourbonEngineListener {
+            override fun onBootstrapped() {
+                engineView.updateRoute(messageId, RouteBehaviour.RETAIN)
+            }
+
+            override fun onRouteChanged(newRoute: String) {
+            }
+
+            override fun onRouteError(route: String) {
+            }
+
+            override fun onRouteLoaded(route: String) {
+            }
+
+            override fun onTap(action: String) {
+            }
+        })
     }
 
     private fun createArgException(): Exception {
