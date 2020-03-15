@@ -13,6 +13,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import sh.bourbon.gist.BuildConfig
 import sh.bourbon.gist.data.model.Configuration
+import sh.bourbon.gist.data.model.MessageView
 import sh.bourbon.gist.data.repository.GistService
 
 
@@ -88,6 +89,19 @@ object GistSdk {
                 showMessage(configuration, messageId)
             } catch (e: Exception) {
                 Log.e(tag, "Failed to show message: ${e.message}", e)
+            }
+        }
+    }
+
+    internal fun logView(messageId: String) {
+        ensureInitialized()
+
+        GlobalScope.launch {
+            try {
+                val userToken = getUserToken() ?: throw Exception("User token not set")
+                gistService.logView(MessageView(messageId, userToken))
+            } catch (e: Exception) {
+                Log.e(tag, "Failed to log message view: ${e.message}", e)
             }
         }
     }

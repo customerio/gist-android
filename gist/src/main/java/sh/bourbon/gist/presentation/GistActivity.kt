@@ -85,7 +85,12 @@ class GistActivity : AppCompatActivity() {
             override fun onRouteLoaded(route: String) {
                 if (isInitialLoad) {
                     isInitialLoad = false
+
+                    // Slide up engine view
                     animateEngineEnter()
+
+                    // Notify Gist that the message has been viewed
+                    GistSdk.logView(messageId)
                 }
             }
 
