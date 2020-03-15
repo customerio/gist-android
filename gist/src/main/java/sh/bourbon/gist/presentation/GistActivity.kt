@@ -23,6 +23,8 @@ class GistActivity : AppCompatActivity() {
         private const val EXTRA_IDENTITY_ENDPOINT = "EXTRA_IDENTITY_ENDPOINT"
         private const val EXTRA_MESSAGE_ID = "EXTRA_MESSAGE_ID"
 
+        private const val ACTION_CLOSE = "gist://close"
+
         fun newIntent(
             context: Context,
             organizationId: String,
@@ -95,6 +97,10 @@ class GistActivity : AppCompatActivity() {
             }
 
             override fun onTap(action: String) {
+                when (action) {
+                    ACTION_CLOSE -> finish()
+                    else -> GistSdk.handleAction(action)
+                }
             }
         })
     }

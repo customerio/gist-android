@@ -51,6 +51,8 @@ object GistSdk {
     private lateinit var organizationId: String
     private lateinit var context: Context
 
+    private var onAction: ((String) -> Unit)? = null
+
     private var observeUserMessagesJob: Job? = null
     private var configuration: Configuration? = null
     private var isInitialized = false
@@ -91,6 +93,14 @@ object GistSdk {
                 Log.e(tag, "Failed to show message: ${e.message}", e)
             }
         }
+    }
+
+    fun setActionListener(onAction: (String) -> Unit) {
+        this.onAction = onAction
+    }
+
+    internal fun handleAction(action: String) {
+        onAction?.let { it(action) }
     }
 
     internal fun logView(messageId: String) {
