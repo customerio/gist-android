@@ -4,8 +4,10 @@ import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import android.content.Intent
 import android.util.Log
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.ticker
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -15,6 +17,7 @@ import sh.bourbon.gist.BuildConfig
 import sh.bourbon.gist.data.model.Configuration
 import sh.bourbon.gist.data.model.MessageView
 import sh.bourbon.gist.data.repository.GistService
+import java.util.*
 
 
 object GistSdk {
@@ -22,6 +25,7 @@ object GistSdk {
     private const val ORGANIZATION_ID_HEADER = "X-Bourbon-Organization-Id"
     private const val SHARED_PREFERENCES_NAME = "gist-sdk"
     private const val SHARED_PREFERENCES_USER_TOKEN_KEY = "userToken"
+    private const val POLL_INTERVAL = 10_000L
 
     private val tag by lazy { this::class.java.simpleName }
 
@@ -54,6 +58,7 @@ object GistSdk {
     private var onAction: ((String) -> Unit)? = null
 
     private var observeUserMessagesJob: Job? = null
+    private var timer: Timer? = null
     private var configuration: Configuration? = null
     private var isInitialized = false
 
@@ -78,8 +83,15 @@ object GistSdk {
     fun setUserToken(userToken: String) {
         ensureInitialized()
 
+        // Save user token in preferences to be fetched on the next launch
         sharedPreferences.edit().putString(SHARED_PREFERENCES_USER_TOKEN_KEY, userToken).apply()
-        observeMessagesForUser(userToken)
+
+        // Try to observe messages for the freshly set user token
+        try {
+            observeMessagesForUser(userToken)
+        } catch (e: Exception) {
+            Log.e(tag, "Failed to observe messages for user: ${e.message}", e)
+        }
     }
 
     fun showMessage(messageId: String) {
@@ -133,6 +145,8 @@ object GistSdk {
         }
     }
 
+    private fun canShowMessage() = !GistActivity.isShown
+
     private suspend fun getConfiguration(): Configuration {
         val existingConfiguration = configuration
         if (existingConfiguration != null) return existingConfiguration
@@ -148,14 +162,25 @@ object GistSdk {
     }
 
     private fun observeMessagesForUser(userToken: String) {
+        // Clean up any previous observers
         observeUserMessagesJob?.cancel()
+        timer = null
+
         observeUserMessagesJob = GlobalScope.launch {
             try {
                 val configuration = getConfiguration()
 
-                // TODO: This should poll every 10s, except for when a message is shown
-                val latestMessages = gistService.fetchMessagesForUser(userToken)
-                showMessage(configuration, latestMessages.first().messageId)
+                // Poll for user messages
+                val ticker = ticker(POLL_INTERVAL, context = this.coroutineContext)
+                for (tick in ticker) {
+                    if (canShowMessage()) {
+                        val latestMessages = gistService.fetchMessagesForUser(userToken)
+                        showMessage(configuration, latestMessages.first().messageId)
+                    }
+                }
+            } catch (e: CancellationException) {
+                // Co-routine was cancelled, cancel internal timer
+                timer?.cancel()
             } catch (e: Exception) {
                 Log.e(tag, "Failed to fetch latest messages: ${e.message}", e)
             }

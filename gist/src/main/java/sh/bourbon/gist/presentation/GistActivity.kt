@@ -25,6 +25,8 @@ class GistActivity : AppCompatActivity() {
 
         private const val ACTION_CLOSE = "gist://close"
 
+        var isShown = false
+
         fun newIntent(
             context: Context,
             organizationId: String,
@@ -56,7 +58,6 @@ class GistActivity : AppCompatActivity() {
             ?: throw createArgException()
         val identityEndpoint = intent.getStringExtra(EXTRA_IDENTITY_ENDPOINT)
             ?: throw createArgException()
-
         val messageId = intent.getStringExtra(EXTRA_MESSAGE_ID)
             ?: throw createArgException()
 
@@ -103,6 +104,16 @@ class GistActivity : AppCompatActivity() {
                 }
             }
         })
+    }
+
+    override fun onStart() {
+        super.onStart()
+        isShown = true
+    }
+
+    override fun onStop() {
+        isShown = false
+        super.onStop()
     }
 
     private fun animateEngineEnter() {
