@@ -1,6 +1,8 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
+apply plugin: 'com.jfrog.bintray'
+apply plugin: 'com.github.dcendents.android-maven'
 
 android {
     compileSdkVersion 29
@@ -27,7 +29,30 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
 }
+ext {
+    bintrayRepo = "gist-android"
+    bintrayName = "sh.bourbon.gist"
+    bintrayOrg = "bourbon"
 
+    libraryName = 'gist'
+
+    publishedGroupId = 'sh.bourbon'
+    artifact = 'gist'
+    libraryVersion = '0.1.0'
+
+    libraryDescription = 'In-app messaging that converts'
+
+    siteUrl = 'https://gist.build/'
+    gitUrl = 'https://gitlab.com/bourbonltd/gist-android'
+
+    developerId = 'bourbon'
+    developerName = 'Bourbon Ltd'
+    developerEmail = 'tech@bourbon.sh'
+
+    licenseName = 'Bourbon Platform License'
+    licenseUrl = 'https://gitlab.com/bourbonltd/engine-android/-/raw/master/LICENSE'
+    allLicenses = ["Bourbon-Platform-License"]
+}
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
@@ -43,3 +68,6 @@ dependencies {
 
     implementation 'sh.bourbon:engine:1.0.10'
 }
+
+apply from: 'install.gradle'
+apply from: 'bintray.gradle'

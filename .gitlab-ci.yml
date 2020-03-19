@@ -1,0 +1,34 @@
+image: jangrewe/gitlab-ci-android
+
+stages:
+  - build
+  - deploy
+
+before_script:
+  - export GRADLE_USER_HOME=$(pwd)/.gradle
+  - chmod +x ./gradlew
+
+cache:
+  key: ${CI_PROJECT_ID}
+  paths:
+    - .gradle/
+
+build:
+  stage: build
+  script:
+    - ./gradlew assembleDebug
+  artifacts:
+    paths:
+      - example/build/outputs/apk/example-debug.apk
+
+deploy_to_bintray:
+  stage: deploy
+  only:
+    - tags
+  script:
+    - ./gradlew install
+    - ./gradlew bintrayUpload
+  artifacts:
+    paths:
+      - gist/build/outputs/aar/gist-debug.aar
+      - gist/build/outputs/aar/gist-relase.aar
