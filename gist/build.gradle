@@ -50,7 +50,7 @@ ext {
     developerEmail = 'tech@bourbon.sh'
 
     licenseName = 'Bourbon Platform License'
-    licenseUrl = 'https://gitlab.com/bourbonltd/engine-android/-/raw/master/LICENSE'
+    licenseUrl = 'https://gitlab.com/bourbonltd/gist-android/-/raw/master/LICENSE'
     allLicenses = ["Bourbon-Platform-License"]
 }
 dependencies {
