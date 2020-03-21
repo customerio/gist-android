@@ -55,7 +55,7 @@ object GistSdk {
     private lateinit var organizationId: String
     private lateinit var context: Context
 
-    private var onAction: ((String) -> Unit)? = null
+    private val actionListeners: MutableList<((String) -> Unit)> = mutableListOf()
 
     private var observeUserMessagesJob: Job? = null
     private var timer: Timer? = null
@@ -107,12 +107,20 @@ object GistSdk {
         }
     }
 
-    fun setActionListener(onAction: (String) -> Unit) {
-        this.onAction = onAction
+    fun addActionListener(onAction: (String) -> Unit) {
+        actionListeners.add(onAction)
+    }
+
+    fun removeActionListener(onAction: (String) -> Unit) {
+        actionListeners.remove(onAction)
+    }
+
+    fun clearActionListeners() {
+        actionListeners.clear()
     }
 
     internal fun handleAction(action: String) {
-        onAction?.let { it(action) }
+        actionListeners.forEach { it(action) }
     }
 
     internal fun logView(messageId: String) {

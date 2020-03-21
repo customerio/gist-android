@@ -11,7 +11,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        GistSdk.setActionListener { action ->
+        GistSdk.addActionListener { action ->
             Toast.makeText(this, "Action received: $action", Toast.LENGTH_LONG).show()
         }
     }
