@@ -83,9 +83,12 @@ class GistActivity : AppCompatActivity() {
             }
 
             override fun onRouteError(route: String) {
+                GistSdk.handleRouteError(route)
             }
 
             override fun onRouteLoaded(route: String) {
+                GistSdk.handleRouteLoaded(route)
+
                 if (isInitialLoad) {
                     isInitialLoad = false
 

@@ -3,6 +3,7 @@ package sh.bourbon.gist_example
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Toast
+import sh.bourbon.gist.presentation.GistListener
 import sh.bourbon.gist.presentation.GistSdk
 
 class MainActivity : AppCompatActivity() {
@@ -11,8 +12,20 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        GistSdk.setActionListener { action ->
-            Toast.makeText(this, "Action received: $action", Toast.LENGTH_LONG).show()
-        }
+        GistSdk.addListener(object : GistListener {
+            override fun onLoaded(route: String) {
+            }
+
+            override fun onError(route: String) {
+            }
+
+            override fun onAction(action: String) {
+                Toast.makeText(
+                    this@MainActivity,
+                    "Action received: $action",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        })
     }
 }
