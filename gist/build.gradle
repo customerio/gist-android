@@ -1,6 +1,8 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
+apply plugin: 'com.jfrog.bintray'
+apply plugin: 'com.github.dcendents.android-maven'
 
 android {
     compileSdkVersion 29
@@ -13,6 +15,8 @@ android {
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles 'consumer-rules.pro'
+
+        buildConfigField("String", "API_URL", '"https://gist-api.dev.bourbon.sh"')
     }
     buildTypes {
         release {
@@ -25,7 +29,30 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
 }
+ext {
+    bintrayRepo = "gist-android"
+    bintrayName = "sh.bourbon.gist"
+    bintrayOrg = "bourbon"
 
+    libraryName = 'gist'
+
+    publishedGroupId = 'sh.bourbon'
+    artifact = 'gist'
+    libraryVersion = '0.1.0'
+
+    libraryDescription = 'In-app messaging that converts'
+
+    siteUrl = 'https://gist.build/'
+    gitUrl = 'https://gitlab.com/bourbonltd/gist-android'
+
+    developerId = 'bourbon'
+    developerName = 'Bourbon Ltd'
+    developerEmail = 'tech@bourbon.sh'
+
+    licenseName = 'Bourbon Platform License'
+    licenseUrl = 'https://gitlab.com/bourbonltd/gist-android/-/raw/master/LICENSE'
+    allLicenses = ["Bourbon-Platform-License"]
+}
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
@@ -39,5 +66,8 @@ dependencies {
     implementation 'com.squareup.retrofit2:retrofit:2.7.2'
     implementation 'com.squareup.retrofit2:converter-gson:2.7.2'
 
-    implementation 'sh.bourbon:engine:1.0.6'
+    implementation 'sh.bourbon:engine:1.0.10'
 }
+
+apply from: 'install.gradle'
+apply from: 'bintray.gradle'
