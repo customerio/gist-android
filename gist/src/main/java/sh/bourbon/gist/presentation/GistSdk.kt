@@ -55,7 +55,7 @@ object GistSdk {
     private lateinit var organizationId: String
     private lateinit var context: Context
 
-    private val actionListeners: MutableList<((String) -> Unit)> = mutableListOf()
+    private val listeners: MutableList<GistListener> = mutableListOf()
 
     private var observeUserMessagesJob: Job? = null
     private var timer: Timer? = null
@@ -107,20 +107,28 @@ object GistSdk {
         }
     }
 
-    fun addActionListener(onAction: (String) -> Unit) {
-        actionListeners.add(onAction)
+    fun addListener(listener: GistListener) {
+        listeners.add(listener)
     }
 
-    fun removeActionListener(onAction: (String) -> Unit) {
-        actionListeners.remove(onAction)
+    fun removeListener(listener: GistListener) {
+        listeners.remove(listener)
     }
 
-    fun clearActionListeners() {
-        actionListeners.clear()
+    fun clearListeners() {
+        listeners.clear()
+    }
+
+    internal fun handleRouteLoaded(route: String) {
+        listeners.forEach { it.onLoaded(route) }
+    }
+
+    internal fun handleRouteError(route: String) {
+        listeners.forEach { it.onError(route) }
     }
 
     internal fun handleAction(action: String) {
-        actionListeners.forEach { it(action) }
+        listeners.forEach { it.onAction(action) }
     }
 
     internal fun logView(messageId: String) {
@@ -202,4 +210,13 @@ object GistSdk {
     private fun ensureInitialized() {
         if (!isInitialized) throw IllegalStateException("GistSdk must be initialized by calling GistSdk.init()")
     }
+}
+
+interface GistListener {
+
+    fun onLoaded(route: String)
+
+    fun onError(route: String)
+
+    fun onAction(action: String)
 }
