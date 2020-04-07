@@ -48,7 +48,6 @@ class GistActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        setTheme(R.style.GistActivityTheme)
         setContentView(R.layout.activity_gist)
 
         val organizationId =
