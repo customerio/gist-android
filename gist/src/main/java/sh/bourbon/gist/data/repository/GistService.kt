@@ -1,5 +1,6 @@
 package sh.bourbon.gist.data.repository
 
+import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
@@ -15,7 +16,7 @@ interface GistService {
     suspend fun fetchConfiguration(): Configuration
 
     @GET("/api/v1/queue/user/{userToken}")
-    suspend fun fetchMessagesForUser(@Path("userToken") userToken: String): List<Message>
+    suspend fun fetchMessagesForUser(@Path("userToken") userToken: String): Response<List<Message>>
 
     @POST("/api/v1/log")
     suspend fun logView(@Body messageView: MessageView)

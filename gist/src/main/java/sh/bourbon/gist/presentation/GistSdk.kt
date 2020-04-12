@@ -1,8 +1,10 @@
 package sh.bourbon.gist.presentation
 
-import android.content.Context
+import android.app.Activity
+import android.app.Application
 import android.content.Context.MODE_PRIVATE
 import android.content.Intent
+import android.os.Bundle
 import android.util.Log
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.GlobalScope
@@ -20,7 +22,7 @@ import sh.bourbon.gist.data.repository.GistService
 import java.util.*
 
 
-object GistSdk {
+object GistSdk : Application.ActivityLifecycleCallbacks {
 
     private const val ORGANIZATION_ID_HEADER = "X-Bourbon-Organization-Id"
     private const val SHARED_PREFERENCES_NAME = "gist-sdk"
@@ -49,33 +51,71 @@ object GistSdk {
     }
 
     private val sharedPreferences by lazy {
-        context.getSharedPreferences(SHARED_PREFERENCES_NAME, MODE_PRIVATE)
+        application.getSharedPreferences(SHARED_PREFERENCES_NAME, MODE_PRIVATE)
     }
 
     private lateinit var organizationId: String
-    private lateinit var context: Context
+    private lateinit var application: Application
 
     private val listeners: MutableList<GistListener> = mutableListOf()
+
+    private var resumedActivities = mutableSetOf<String>()
 
     private var observeUserMessagesJob: Job? = null
     private var timer: Timer? = null
     private var configuration: Configuration? = null
     private var isInitialized = false
 
-    fun init(context: Context, organizationId: String) {
-        this.context = context
+    override fun onActivityCreated(activity: Activity, p1: Bundle?) {
+    }
+
+    override fun onActivityResumed(activity: Activity) {
+        resumedActivities.add(activity.javaClass.name)
+
+        // Start polling if app is resumed and user messages job is cancelled
+        if (isAppResumed() && observeUserMessagesJob?.isCancelled == true) {
+            getUserToken()?.let { userToken -> observeMessagesForUser(userToken) }
+        }
+    }
+
+    override fun onActivityPaused(activity: Activity) {
+        resumedActivities.remove(activity.javaClass.name)
+
+        // Stop polling if app is in background
+        if (!isAppResumed()) {
+            observeUserMessagesJob?.cancel()
+            observeUserMessagesJob = null
+        }
+    }
+
+    override fun onActivityStarted(activity: Activity) {
+    }
+
+    override fun onActivityStopped(activity: Activity) {
+    }
+
+    override fun onActivityDestroyed(activity: Activity) {
+    }
+
+    override fun onActivitySaveInstanceState(activity: Activity, p1: Bundle) {
+    }
+
+    fun init(application: Application, organizationId: String) {
+        this.application = application
         this.organizationId = organizationId
         this.isInitialized = true
+
+        application.registerActivityLifecycleCallbacks(this)
 
         GlobalScope.launch {
             try {
                 // Pre-fetch configuration
-                gistService.fetchConfiguration()
+                getConfiguration()
 
                 // Observe user messages if user token is set
                 getUserToken()?.let { userToken -> observeMessagesForUser(userToken) }
             } catch (e: Exception) {
-                Log.e(tag, "Failed to fetch configuration: ${e.message}", e)
+                Log.e(tag, e.message, e)
             }
         }
     }
@@ -151,7 +191,7 @@ object GistSdk {
     private fun showMessage(configuration: Configuration, messageId: String) {
         with(configuration) {
             val intent = GistActivity.newIntent(
-                context,
+                application,
                 organizationId,
                 projectId,
                 engineEndpoint,
@@ -161,11 +201,9 @@ object GistSdk {
 
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
 
-            context.startActivity(intent)
+            application.startActivity(intent)
         }
     }
-
-    private fun canShowMessage() = !GistActivity.isShown
 
     private suspend fun getConfiguration(): Configuration {
         val existingConfiguration = configuration
@@ -193,16 +231,21 @@ object GistSdk {
                 // Poll for user messages
                 val ticker = ticker(POLL_INTERVAL, context = this.coroutineContext)
                 for (tick in ticker) {
-                    if (canShowMessage()) {
-                        val latestMessages = gistService.fetchMessagesForUser(userToken)
-                        showMessage(configuration, latestMessages.first().messageId)
+                    val latestMessagesResponse = gistService.fetchMessagesForUser(userToken)
+                    if (latestMessagesResponse.code() == 204) {
+                        // No content, don't do anything
+                        break
+                    } else if (latestMessagesResponse.isSuccessful) {
+                        latestMessagesResponse.body()?.last()?.let {
+                            if (canShowMessage()) showMessage(configuration, it.messageId)
+                        }
                     }
                 }
             } catch (e: CancellationException) {
                 // Co-routine was cancelled, cancel internal timer
                 timer?.cancel()
             } catch (e: Exception) {
-                Log.e(tag, "Failed to fetch latest messages: ${e.message}", e)
+                Log.e(tag, "Failed to get user messages: ${e.message}", e)
             }
         }
     }
@@ -214,6 +257,14 @@ object GistSdk {
     private fun ensureInitialized() {
         if (!isInitialized) throw IllegalStateException("GistSdk must be initialized by calling GistSdk.init()")
     }
+
+    private fun canShowMessage(): Boolean {
+        return isAppResumed() && !isGistActivityResumed()
+    }
+
+    private fun isAppResumed() = resumedActivities.isNotEmpty()
+
+    private fun isGistActivityResumed() = resumedActivities.contains(GistActivity::javaClass.name)
 }
 
 interface GistListener {
