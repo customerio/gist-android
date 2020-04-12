@@ -72,8 +72,11 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
     override fun onActivityResumed(activity: Activity) {
         resumedActivities.add(activity.javaClass.name)
 
-        // Start polling if app is resumed and user messages job is cancelled
-        if (isAppResumed() && observeUserMessagesJob?.isCancelled == true) {
+        // Start polling if app is resumed and user messages are not being observed
+        val isNotObservingMessages =
+            observeUserMessagesJob == null || observeUserMessagesJob?.isCancelled == true
+
+        if (isAppResumed() && isNotObservingMessages) {
             getUserToken()?.let { userToken -> observeMessagesForUser(userToken) }
         }
     }
@@ -234,7 +237,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
                     val latestMessagesResponse = gistService.fetchMessagesForUser(userToken)
                     if (latestMessagesResponse.code() == 204) {
                         // No content, don't do anything
-                        break
+                        continue
                     } else if (latestMessagesResponse.isSuccessful) {
                         latestMessagesResponse.body()?.last()?.let {
                             if (canShowMessage()) showMessage(configuration, it.messageId)
@@ -264,7 +267,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
 
     private fun isAppResumed() = resumedActivities.isNotEmpty()
 
-    private fun isGistActivityResumed() = resumedActivities.contains(GistActivity::javaClass.name)
+    private fun isGistActivityResumed() = resumedActivities.contains(GistActivity::class.java.name)
 }
 
 interface GistListener {
