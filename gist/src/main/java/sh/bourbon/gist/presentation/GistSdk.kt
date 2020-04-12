@@ -123,6 +123,10 @@ object GistSdk {
         listeners.forEach { it.onLoaded(route) }
     }
 
+    internal fun handleRouteClosed(route: String) {
+        listeners.forEach { it.onClosed(route) }
+    }
+
     internal fun handleRouteError(route: String) {
         listeners.forEach { it.onError(route) }
     }
@@ -217,6 +221,8 @@ interface GistListener {
     fun onLoaded(route: String)
 
     fun onError(route: String)
+
+    fun onClosed(route: String)
 
     fun onAction(action: String)
 }
