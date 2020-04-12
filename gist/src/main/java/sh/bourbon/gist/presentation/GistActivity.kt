@@ -91,11 +91,11 @@ class GistActivity : AppCompatActivity() {
             }
 
             override fun onRouteError(route: String) {
-                GistSdk.handleRouteError(route)
+                GistSdk.handleEngineRouteError(route)
             }
 
             override fun onRouteLoaded(route: String) {
-                GistSdk.handleRouteLoaded(route)
+                GistSdk.handleEngineRouteLoaded(route)
 
                 if (isInitialLoad) {
                     isInitialLoad = false
@@ -111,10 +111,10 @@ class GistActivity : AppCompatActivity() {
             override fun onTap(action: String) {
                 when (action) {
                     ACTION_CLOSE -> {
-                        GistSdk.handleRouteClosed(messageId)
+                        GistSdk.handleEngineRouteClosed(messageId)
                         finish()
                     }
-                    else -> GistSdk.handleAction(action)
+                    else -> GistSdk.handleEngineAction(action)
                 }
             }
         })

@@ -119,19 +119,19 @@ object GistSdk {
         listeners.clear()
     }
 
-    internal fun handleRouteLoaded(route: String) {
-        listeners.forEach { it.onLoaded(route) }
+    internal fun handleEngineRouteLoaded(route: String) {
+        listeners.forEach { it.onMessageShown(route) }
     }
 
-    internal fun handleRouteClosed(route: String) {
-        listeners.forEach { it.onClosed(route) }
+    internal fun handleEngineRouteClosed(route: String) {
+        listeners.forEach { it.onMessageDismissed(route) }
     }
 
-    internal fun handleRouteError(route: String) {
+    internal fun handleEngineRouteError(route: String) {
         listeners.forEach { it.onError(route) }
     }
 
-    internal fun handleAction(action: String) {
+    internal fun handleEngineAction(action: String) {
         listeners.forEach { it.onAction(action) }
     }
 
@@ -218,11 +218,11 @@ object GistSdk {
 
 interface GistListener {
 
-    fun onLoaded(route: String)
+    fun onMessageShown(messageId: String)
 
-    fun onError(route: String)
-
-    fun onClosed(route: String)
+    fun onMessageDismissed(messageId: String)
 
     fun onAction(action: String)
+
+    fun onError(messageId: String)
 }
