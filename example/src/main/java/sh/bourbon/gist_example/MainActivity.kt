@@ -1,8 +1,8 @@
 package sh.bourbon.gist_example
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import sh.bourbon.gist.presentation.GistListener
 import sh.bourbon.gist.presentation.GistSdk
 
@@ -13,10 +13,10 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         GistSdk.addListener(object : GistListener {
-            override fun onLoaded(route: String) {
+            override fun onMessageShown(messageId: String) {
             }
 
-            override fun onError(route: String) {
+            override fun onMessageDismissed(messageId: String) {
             }
 
             override fun onAction(action: String) {
@@ -25,6 +25,9 @@ class MainActivity : AppCompatActivity() {
                     "Action received: $action",
                     Toast.LENGTH_LONG
                 ).show()
+            }
+
+            override fun onError(messageId: String) {
             }
         })
     }

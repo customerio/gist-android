@@ -45,20 +45,29 @@ class GistActivity : AppCompatActivity() {
         }
     }
 
+    private val organizationId by lazy {
+        intent.getStringExtra(EXTRA_ORGANIZATION_ID) ?: throw createArgException()
+    }
+    private val projectId by lazy {
+        intent.getStringExtra(EXTRA_PROJECT_ID) ?: throw createArgException()
+    }
+    private val engineEndpoint by lazy {
+        intent.getStringExtra(EXTRA_ENGINE_ENDPOINT)
+            ?: throw createArgException()
+    }
+    private val identityEndpoint by lazy {
+        intent.getStringExtra(EXTRA_IDENTITY_ENDPOINT)
+            ?: throw createArgException()
+    }
+    private val messageId by lazy {
+        intent.getStringExtra(EXTRA_MESSAGE_ID)
+            ?: throw createArgException()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         setContentView(R.layout.activity_gist)
-
-        val organizationId =
-            intent.getStringExtra(EXTRA_ORGANIZATION_ID) ?: throw createArgException()
-        val projectId = intent.getStringExtra(EXTRA_PROJECT_ID) ?: throw createArgException()
-        val engineEndpoint = intent.getStringExtra(EXTRA_ENGINE_ENDPOINT)
-            ?: throw createArgException()
-        val identityEndpoint = intent.getStringExtra(EXTRA_IDENTITY_ENDPOINT)
-            ?: throw createArgException()
-        val messageId = intent.getStringExtra(EXTRA_MESSAGE_ID)
-            ?: throw createArgException()
 
         engineView.setup(
             EngineConfiguration(
@@ -82,11 +91,11 @@ class GistActivity : AppCompatActivity() {
             }
 
             override fun onRouteError(route: String) {
-                GistSdk.handleRouteError(route)
+                GistSdk.handleEngineRouteError(route)
             }
 
             override fun onRouteLoaded(route: String) {
-                GistSdk.handleRouteLoaded(route)
+                GistSdk.handleEngineRouteLoaded(route)
 
                 if (isInitialLoad) {
                     isInitialLoad = false
@@ -101,8 +110,11 @@ class GistActivity : AppCompatActivity() {
 
             override fun onTap(action: String) {
                 when (action) {
-                    ACTION_CLOSE -> finish()
-                    else -> GistSdk.handleAction(action)
+                    ACTION_CLOSE -> {
+                        GistSdk.handleEngineRouteClosed(messageId)
+                        finish()
+                    }
+                    else -> GistSdk.handleEngineAction(action)
                 }
             }
         })
