@@ -248,7 +248,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
                 })
             }
 
-            uiHandler.post(runnable);
+            uiHandler.post(runnable)
         }
     }
 
