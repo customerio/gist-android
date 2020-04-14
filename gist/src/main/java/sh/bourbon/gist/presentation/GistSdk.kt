@@ -7,7 +7,6 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.util.Log
-import android.view.LayoutInflater
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
@@ -19,7 +18,6 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import sh.bourbon.engine.BourbonEngine
 import sh.bourbon.engine.BourbonEngineListener
-import sh.bourbon.engine.BourbonEngineView
 import sh.bourbon.engine.EngineConfiguration
 import sh.bourbon.gist.BuildConfig
 import sh.bourbon.gist.data.model.Configuration
@@ -239,6 +237,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
                             showMessageActivity()
                             // Notify Gist that the message has been viewed
                             logView(messageId)
+                            handleEngineRouteLoaded(messageId)
                         }
                     }
 

@@ -1,6 +1,7 @@
 package sh.bourbon.gist_example
 
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import sh.bourbon.gist.presentation.GistListener
@@ -15,9 +16,11 @@ class MainActivity : AppCompatActivity() {
 
         GistSdk.addListener(object : GistListener {
             override fun onMessageShown(messageId: String) {
+                Log.d("Main Activity", "Message Shown")
             }
 
             override fun onMessageDismissed(messageId: String) {
+                Log.d("Main Activity", "Message Dismissed")
             }
 
             override fun onAction(action: String) {
@@ -29,6 +32,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onError(messageId: String) {
+                Log.d("Main Activity", "Message Error")
             }
         })
 
