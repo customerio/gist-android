@@ -28,6 +28,8 @@ import java.util.*
 
 object GistSdk : Application.ActivityLifecycleCallbacks {
 
+    internal const val BOURBON_ENGINE_ID = "gistSdk"
+
     private const val ORGANIZATION_ID_HEADER = "X-Bourbon-Organization-Id"
     private const val SHARED_PREFERENCES_NAME = "gist-sdk"
     private const val SHARED_PREFERENCES_USER_TOKEN_KEY = "userToken"
@@ -206,7 +208,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         with(configuration) {
             val uiHandler = Handler(application.mainLooper)
             val runnable = Runnable {
-                bourbonEngine = BourbonEngine(application)
+                bourbonEngine = BourbonEngine(application, BOURBON_ENGINE_ID)
                 bourbonEngine?.setup(
                     EngineConfiguration(
                         organizationId = organizationId,
