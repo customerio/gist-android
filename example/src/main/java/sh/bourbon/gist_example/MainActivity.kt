@@ -5,6 +5,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import sh.bourbon.gist.presentation.GistListener
 import sh.bourbon.gist.presentation.GistSdk
+import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
 
@@ -30,5 +31,9 @@ class MainActivity : AppCompatActivity() {
             override fun onError(messageId: String) {
             }
         })
+
+        launchButton.setOnClickListener {
+            GistSdk.showMessage("expired")
+        }
     }
 }

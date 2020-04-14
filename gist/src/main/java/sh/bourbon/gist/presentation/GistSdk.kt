@@ -5,7 +5,9 @@ import android.app.Application
 import android.content.Context.MODE_PRIVATE
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
 import android.util.Log
+import android.view.LayoutInflater
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
@@ -15,6 +17,10 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import sh.bourbon.engine.BourbonEngine
+import sh.bourbon.engine.BourbonEngineListener
+import sh.bourbon.engine.BourbonEngineView
+import sh.bourbon.engine.EngineConfiguration
 import sh.bourbon.gist.BuildConfig
 import sh.bourbon.gist.data.model.Configuration
 import sh.bourbon.gist.data.model.MessageView
@@ -28,6 +34,8 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
     private const val SHARED_PREFERENCES_NAME = "gist-sdk"
     private const val SHARED_PREFERENCES_USER_TOKEN_KEY = "userToken"
     private const val POLL_INTERVAL = 10_000L
+
+    private const val ACTION_CLOSE = "gist://close"
 
     private val tag by lazy { this::class.java.simpleName }
 
@@ -65,6 +73,8 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
     private var timer: Timer? = null
     private var configuration: Configuration? = null
     private var isInitialized = false
+    private var bourbonEngine: BourbonEngine? = null
+    private var gistActivity: GistActivity? = null
 
     override fun onActivityCreated(activity: Activity, p1: Bundle?) {
     }
@@ -92,6 +102,9 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
     }
 
     override fun onActivityStarted(activity: Activity) {
+        if (activity is GistActivity) {
+            gistActivity = activity
+        }
     }
 
     override fun onActivityStopped(activity: Activity) {
@@ -178,7 +191,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         listeners.forEach { it.onAction(action) }
     }
 
-    internal fun logView(messageId: String) {
+    private fun logView(messageId: String) {
         ensureInitialized()
 
         GlobalScope.launch {
@@ -193,19 +206,61 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
 
     private fun showMessage(configuration: Configuration, messageId: String) {
         with(configuration) {
-            val intent = GistActivity.newIntent(
-                application,
-                organizationId,
-                projectId,
-                engineEndpoint,
-                identityEndpoint,
-                messageId
-            )
+            val uiHandler = Handler(application.mainLooper)
+            val runnable = Runnable {
+                bourbonEngine = BourbonEngine(application)
+                bourbonEngine?.setup(
+                    EngineConfiguration(
+                        organizationId = organizationId,
+                        projectId = projectId,
+                        engineEndpoint = engineEndpoint,
+                        authenticationEndpoint = identityEndpoint,
+                        engineVersion = 1.0,
+                        configurationVersion = 1.0,
+                        mainRoute = messageId
+                    )
+                )
 
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                bourbonEngine?.setListener(object : BourbonEngineListener {
+                    var isInitialLoad = true
+                    override fun onBootstrapped() {
+                    }
 
-            application.startActivity(intent)
+                    override fun onRouteChanged(newRoute: String) {
+                    }
+
+                    override fun onRouteError(route: String) {
+                        handleEngineRouteError(route)
+                    }
+
+                    override fun onRouteLoaded(route: String) {
+                        if (isInitialLoad) {
+                            isInitialLoad = false
+                            showMessageActivity()
+                            // Notify Gist that the message has been viewed
+                            logView(messageId)
+                        }
+                    }
+
+                    override fun onTap(action: String) {
+                        when (action) {
+                            ACTION_CLOSE -> {
+                                handleEngineRouteClosed(messageId)
+                                gistActivity?.finish()
+                            }
+                            else -> handleEngineAction(action)
+                        }
+                    }
+                })
+            }
+            uiHandler.post(runnable);
         }
+    }
+
+    private fun showMessageActivity() {
+        val intent = GistActivity.newIntent(application)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        application.startActivity(intent)
     }
 
     private suspend fun getConfiguration(): Configuration {
@@ -271,7 +326,6 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
 }
 
 interface GistListener {
-
     fun onMessageShown(messageId: String)
 
     fun onMessageDismissed(messageId: String)
