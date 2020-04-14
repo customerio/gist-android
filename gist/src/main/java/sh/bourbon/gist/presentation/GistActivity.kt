@@ -4,15 +4,13 @@ import android.animation.AnimatorInflater
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.animation.doOnEnd
-import androidx.core.animation.doOnStart
 import kotlinx.android.synthetic.main.activity_gist.*
 import sh.bourbon.gist.R
 
 
-class GistActivity : AppCompatActivity() {
+class GistActivity : AppCompatActivity(), GistListener {
     companion object {
         fun newIntent(context: Context): Intent {
             return Intent(context, GistActivity::class.java)
@@ -31,6 +29,18 @@ class GistActivity : AppCompatActivity() {
         animation.start()
     }
 
+    override fun onResume() {
+        super.onResume()
+
+        GistSdk.addListener(this)
+    }
+
+    override fun onPause() {
+        GistSdk.removeListener(this)
+
+        super.onPause()
+    }
+
     override fun finish() {
         val animation = AnimatorInflater.loadAnimator(this, R.animator.animate_out)
         animation.setTarget(engineView)
@@ -38,5 +48,19 @@ class GistActivity : AppCompatActivity() {
         animation.doOnEnd {
             super.finish()
         }
+    }
+
+    override fun onMessageShown(messageId: String) {
+    }
+
+    override fun onMessageDismissed(messageId: String) {
+        // Message was cancelled, close activity
+        finish()
+    }
+
+    override fun onAction(action: String) {
+    }
+
+    override fun onError(messageId: String) {
     }
 }

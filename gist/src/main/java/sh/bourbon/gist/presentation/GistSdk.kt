@@ -74,7 +74,6 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
     private var configuration: Configuration? = null
     private var isInitialized = false
     private var bourbonEngine: BourbonEngine? = null
-    private var gistActivity: GistActivity? = null
 
     override fun onActivityCreated(activity: Activity, p1: Bundle?) {
     }
@@ -102,9 +101,6 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
     }
 
     override fun onActivityStarted(activity: Activity) {
-        if (activity is GistActivity) {
-            gistActivity = activity
-        }
     }
 
     override fun onActivityStopped(activity: Activity) {
@@ -245,15 +241,13 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
 
                     override fun onTap(action: String) {
                         when (action) {
-                            ACTION_CLOSE -> {
-                                handleEngineRouteClosed(messageId)
-                                gistActivity?.finish()
-                            }
+                            ACTION_CLOSE -> handleEngineRouteClosed(messageId)
                             else -> handleEngineAction(action)
                         }
                     }
                 })
             }
+
             uiHandler.post(runnable);
         }
     }
