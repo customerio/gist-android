@@ -108,10 +108,8 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
     }
 
     override fun onActivityDestroyed(activity: Activity) {
-        if (activity.javaClass.name == GistActivity::class.java.name) {
-            currentMessageId?.let { currentMessageId ->
-                handleEngineRouteClosed(currentMessageId)
-            }
+        if (activity is GistActivity) {
+            currentMessageId?.let { currentMessageId -> handleEngineRouteClosed(currentMessageId) }
         }
     }
 
