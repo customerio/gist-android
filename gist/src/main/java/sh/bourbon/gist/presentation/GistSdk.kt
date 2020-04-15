@@ -175,24 +175,6 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         listeners.clear()
     }
 
-    internal fun handleEngineRouteLoaded(route: String) {
-        listeners.forEach { it.onMessageShown(route) }
-    }
-
-    internal fun handleEngineRouteClosed(route: String) {
-        currentMessageId = null
-        bourbonEngine = null
-        listeners.forEach { it.onMessageDismissed(route) }
-    }
-
-    internal fun handleEngineRouteError(route: String) {
-        listeners.forEach { it.onError(route) }
-    }
-
-    internal fun handleEngineAction(action: String) {
-        listeners.forEach { it.onAction(action) }
-    }
-
     private fun logView(messageId: String) {
         ensureInitialized()
 
@@ -311,6 +293,24 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
                 Log.e(tag, "Failed to get user messages: ${e.message}", e)
             }
         }
+    }
+
+    private fun handleEngineRouteLoaded(route: String) {
+        listeners.forEach { it.onMessageShown(route) }
+    }
+
+    private fun handleEngineRouteClosed(route: String) {
+        currentMessageId = null
+        bourbonEngine = null
+        listeners.forEach { it.onMessageDismissed(route) }
+    }
+
+    private fun handleEngineRouteError(route: String) {
+        listeners.forEach { it.onError(route) }
+    }
+
+    private fun handleEngineAction(action: String) {
+        listeners.forEach { it.onAction(action) }
     }
 
     private fun getUserToken(): String? {
