@@ -212,49 +212,51 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
                 currentMessageId = messageId
                 val uiHandler = Handler(application.mainLooper)
                 val runnable = Runnable {
-                    bourbonEngine = BourbonEngine(application, BOURBON_ENGINE_ID)
-                    bourbonEngine?.setup(
-                        EngineConfiguration(
-                            organizationId = organizationId,
-                            projectId = projectId,
-                            engineEndpoint = engineEndpoint,
-                            authenticationEndpoint = identityEndpoint,
-                            engineVersion = 1.0,
-                            configurationVersion = 1.0,
-                            mainRoute = messageId
+                    bourbonEngine = BourbonEngine(application, BOURBON_ENGINE_ID).apply {
+                        setup(
+                            EngineConfiguration(
+                                organizationId = organizationId,
+                                projectId = projectId,
+                                engineEndpoint = engineEndpoint,
+                                authenticationEndpoint = identityEndpoint,
+                                engineVersion = 1.0,
+                                configurationVersion = 1.0,
+                                mainRoute = messageId
+                            )
                         )
-                    )
 
-                    bourbonEngine?.setListener(object : BourbonEngineListener {
-                        var isInitialLoad = true
-                        override fun onBootstrapped() {
-                        }
-
-                        override fun onRouteChanged(newRoute: String) {
-                        }
-
-                        override fun onRouteError(route: String) {
-                            handleEngineRouteError(route)
-                        }
-
-                        override fun onRouteLoaded(route: String) {
-                            if (isInitialLoad) {
-                                isInitialLoad = false
-                                showMessageActivity()
-                                // Notify Gist that the message has been viewed
-                                logView(messageId)
-                                handleEngineRouteLoaded(messageId)
+                        setListener(object : BourbonEngineListener {
+                            var isInitialLoad = true
+                            override fun onBootstrapped() {
                             }
-                        }
 
-                        override fun onTap(action: String) {
-                            when (action) {
-                                ACTION_CLOSE -> handleEngineRouteClosed(messageId)
-                                else -> handleEngineAction(action)
+                            override fun onRouteChanged(newRoute: String) {
                             }
-                        }
-                    })
+
+                            override fun onRouteError(route: String) {
+                                handleEngineRouteError(route)
+                            }
+
+                            override fun onRouteLoaded(route: String) {
+                                if (isInitialLoad) {
+                                    isInitialLoad = false
+                                    showMessageActivity()
+                                    // Notify Gist that the message has been viewed
+                                    logView(messageId)
+                                    handleEngineRouteLoaded(messageId)
+                                }
+                            }
+
+                            override fun onTap(action: String) {
+                                when (action) {
+                                    ACTION_CLOSE -> handleEngineRouteClosed(messageId)
+                                    else -> handleEngineAction(action)
+                                }
+                            }
+                        })
+                    }
                 }
+
                 uiHandler.post(runnable)
             }
         }
