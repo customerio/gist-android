@@ -62,5 +62,7 @@ class GistActivity : AppCompatActivity(), GistListener {
     }
 
     override fun onError(messageId: String) {
+        // Error displaying message, close activity
+        finish()
     }
 }

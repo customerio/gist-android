@@ -176,10 +176,12 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
     }
 
     internal fun handleEngineRouteClosed(route: String) {
+        bourbonEngine = null
         listeners.forEach { it.onMessageDismissed(route) }
     }
 
     internal fun handleEngineRouteError(route: String) {
+        bourbonEngine = null
         listeners.forEach { it.onError(route) }
     }
 
@@ -202,53 +204,54 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
 
     private fun showMessage(configuration: Configuration, messageId: String) {
         with(configuration) {
-            val uiHandler = Handler(application.mainLooper)
-            val runnable = Runnable {
-                bourbonEngine = BourbonEngine(application, BOURBON_ENGINE_ID)
-                bourbonEngine?.setup(
-                    EngineConfiguration(
-                        organizationId = organizationId,
-                        projectId = projectId,
-                        engineEndpoint = engineEndpoint,
-                        authenticationEndpoint = identityEndpoint,
-                        engineVersion = 1.0,
-                        configurationVersion = 1.0,
-                        mainRoute = messageId
+            if (bourbonEngine == null) {
+                val uiHandler = Handler(application.mainLooper)
+                val runnable = Runnable {
+                    bourbonEngine = BourbonEngine(application, BOURBON_ENGINE_ID)
+                    bourbonEngine?.setup(
+                        EngineConfiguration(
+                            organizationId = organizationId,
+                            projectId = projectId,
+                            engineEndpoint = engineEndpoint,
+                            authenticationEndpoint = identityEndpoint,
+                            engineVersion = 1.0,
+                            configurationVersion = 1.0,
+                            mainRoute = messageId
+                        )
                     )
-                )
 
-                bourbonEngine?.setListener(object : BourbonEngineListener {
-                    var isInitialLoad = true
-                    override fun onBootstrapped() {
-                    }
-
-                    override fun onRouteChanged(newRoute: String) {
-                    }
-
-                    override fun onRouteError(route: String) {
-                        handleEngineRouteError(route)
-                    }
-
-                    override fun onRouteLoaded(route: String) {
-                        if (isInitialLoad) {
-                            isInitialLoad = false
-                            showMessageActivity()
-                            // Notify Gist that the message has been viewed
-                            logView(messageId)
-                            handleEngineRouteLoaded(messageId)
+                    bourbonEngine?.setListener(object : BourbonEngineListener {
+                        var isInitialLoad = true
+                        override fun onBootstrapped() {
                         }
-                    }
 
-                    override fun onTap(action: String) {
-                        when (action) {
-                            ACTION_CLOSE -> handleEngineRouteClosed(messageId)
-                            else -> handleEngineAction(action)
+                        override fun onRouteChanged(newRoute: String) {
                         }
-                    }
-                })
+
+                        override fun onRouteError(route: String) {
+                            handleEngineRouteError(route)
+                        }
+
+                        override fun onRouteLoaded(route: String) {
+                            if (isInitialLoad) {
+                                isInitialLoad = false
+                                showMessageActivity()
+                                // Notify Gist that the message has been viewed
+                                logView(messageId)
+                                handleEngineRouteLoaded(messageId)
+                            }
+                        }
+
+                        override fun onTap(action: String) {
+                            when (action) {
+                                ACTION_CLOSE -> handleEngineRouteClosed(messageId)
+                                else -> handleEngineAction(action)
+                            }
+                        }
+                    })
+                }
+                uiHandler.post(runnable)
             }
-
-            uiHandler.post(runnable)
         }
     }
 
