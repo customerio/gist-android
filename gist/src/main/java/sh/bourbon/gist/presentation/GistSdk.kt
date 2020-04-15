@@ -74,6 +74,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
     private var configuration: Configuration? = null
     private var isInitialized = false
     private var bourbonEngine: BourbonEngine? = null
+    private var currentMessageId: String? = null
 
     override fun onActivityCreated(activity: Activity, p1: Bundle?) {
     }
@@ -107,6 +108,11 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
     }
 
     override fun onActivityDestroyed(activity: Activity) {
+        if (activity.javaClass.name == GistActivity::class.java.name) {
+            currentMessageId?.let { currentMessageId ->
+                handleEngineRouteClosed(currentMessageId)
+            }
+        }
     }
 
     override fun onActivitySaveInstanceState(activity: Activity, p1: Bundle) {
@@ -176,12 +182,12 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
     }
 
     internal fun handleEngineRouteClosed(route: String) {
+        currentMessageId = null
         bourbonEngine = null
         listeners.forEach { it.onMessageDismissed(route) }
     }
 
     internal fun handleEngineRouteError(route: String) {
-        bourbonEngine = null
         listeners.forEach { it.onError(route) }
     }
 
@@ -204,7 +210,8 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
 
     private fun showMessage(configuration: Configuration, messageId: String) {
         with(configuration) {
-            if (bourbonEngine == null) {
+            if (currentMessageId == null) {
+                currentMessageId = messageId
                 val uiHandler = Handler(application.mainLooper)
                 val runnable = Runnable {
                     bourbonEngine = BourbonEngine(application, BOURBON_ENGINE_ID)
