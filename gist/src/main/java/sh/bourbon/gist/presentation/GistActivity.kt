@@ -21,7 +21,7 @@ class GistActivity : AppCompatActivity(), GistListener {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_gist)
 
-        engineView.setEngineId(GistSdk.BOURBON_ENGINE_ID)
+        engineView.setEngineId(GistSdk.BOURBON_ENGINE_ID, true)
 
         val animation = AnimatorInflater.loadAnimator(this, R.animator.animate_in);
         animation.startDelay = 1000 // Delay animation to avoid TextureView jitter
