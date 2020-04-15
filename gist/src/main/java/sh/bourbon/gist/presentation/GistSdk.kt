@@ -75,6 +75,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
     private var isInitialized = false
     private var bourbonEngine: BourbonEngine? = null
     private var currentMessageId: String? = null
+    private var pendingMessageId: String? = null
 
     override fun onActivityCreated(activity: Activity, p1: Bundle?) {
     }
@@ -88,6 +89,12 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
 
         if (isAppResumed() && isNotObservingMessages) {
             getUserToken()?.let { userToken -> observeMessagesForUser(userToken) }
+        }
+
+        // Show any pending messages
+        pendingMessageId?.let { messageId ->
+            pendingMessageId = null
+            handleEngineRouteLoaded(messageId)
         }
     }
 
@@ -222,10 +229,16 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
                             override fun onRouteLoaded(route: String) {
                                 if (isInitialLoad) {
                                     isInitialLoad = false
-                                    showMessageActivity()
-                                    // Notify Gist that the message has been viewed
-                                    logView(messageId)
-                                    handleEngineRouteLoaded(messageId)
+
+                                    val isAppStillRunning = resumedActivities.isNotEmpty()
+                                    if (isAppStillRunning) {
+                                        handleEngineRouteLoaded(messageId)
+                                    } else {
+                                        // App was paused between the request and the time the engine was loaded.
+                                        // Since the activity cannot be shown in this state, set the message id as
+                                        // pending and show it when the app is resumed.
+                                        pendingMessageId = route
+                                    }
                                 }
                             }
 
@@ -296,6 +309,8 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
     }
 
     private fun handleEngineRouteLoaded(route: String) {
+        showMessageActivity()
+        logView(route)
         listeners.forEach { it.onMessageShown(route) }
     }
 
