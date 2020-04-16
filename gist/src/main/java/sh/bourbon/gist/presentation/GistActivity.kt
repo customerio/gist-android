@@ -74,7 +74,8 @@ class GistActivity : AppCompatActivity() {
                 engineEndpoint = engineEndpoint,
                 authenticationEndpoint = identityEndpoint,
                 engineVersion = 1.0,
-                configurationVersion = 1.0
+                configurationVersion = 1.0,
+                mainRoute = messageId
             )
         )
 
@@ -82,7 +83,6 @@ class GistActivity : AppCompatActivity() {
             var isInitialLoad = true
 
             override fun onBootstrapped() {
-                engineView.updateRoute(messageId, RouteBehaviour.RETAIN)
             }
 
             override fun onRouteChanged(newRoute: String) {
