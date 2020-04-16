@@ -5,6 +5,7 @@ import android.app.Application
 import android.content.Context.MODE_PRIVATE
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
 import android.util.Log
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.GlobalScope
@@ -15,6 +16,9 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import sh.bourbon.engine.BourbonEngine
+import sh.bourbon.engine.BourbonEngineListener
+import sh.bourbon.engine.EngineConfiguration
 import sh.bourbon.gist.BuildConfig
 import sh.bourbon.gist.data.model.Configuration
 import sh.bourbon.gist.data.model.MessageView
@@ -24,10 +28,14 @@ import java.util.*
 
 object GistSdk : Application.ActivityLifecycleCallbacks {
 
+    internal const val BOURBON_ENGINE_ID = "gistSdk"
+
     private const val ORGANIZATION_ID_HEADER = "X-Bourbon-Organization-Id"
     private const val SHARED_PREFERENCES_NAME = "gist-sdk"
     private const val SHARED_PREFERENCES_USER_TOKEN_KEY = "userToken"
     private const val POLL_INTERVAL = 10_000L
+
+    private const val ACTION_CLOSE = "gist://close"
 
     private val tag by lazy { this::class.java.simpleName }
 
@@ -65,6 +73,9 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
     private var timer: Timer? = null
     private var configuration: Configuration? = null
     private var isInitialized = false
+    private var bourbonEngine: BourbonEngine? = null
+    private var currentMessageId: String? = null
+    private var pendingMessageId: String? = null
 
     override fun onActivityCreated(activity: Activity, p1: Bundle?) {
     }
@@ -78,6 +89,12 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
 
         if (isAppResumed() && isNotObservingMessages) {
             getUserToken()?.let { userToken -> observeMessagesForUser(userToken) }
+        }
+
+        // Show any pending messages
+        pendingMessageId?.let { messageId ->
+            pendingMessageId = null
+            handleEngineRouteLoaded(messageId)
         }
     }
 
@@ -98,6 +115,9 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
     }
 
     override fun onActivityDestroyed(activity: Activity) {
+        if (activity is GistActivity) {
+            currentMessageId?.let { currentMessageId -> handleEngineRouteClosed(currentMessageId) }
+        }
     }
 
     override fun onActivitySaveInstanceState(activity: Activity, p1: Bundle) {
@@ -162,23 +182,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         listeners.clear()
     }
 
-    internal fun handleEngineRouteLoaded(route: String) {
-        listeners.forEach { it.onMessageShown(route) }
-    }
-
-    internal fun handleEngineRouteClosed(route: String) {
-        listeners.forEach { it.onMessageDismissed(route) }
-    }
-
-    internal fun handleEngineRouteError(route: String) {
-        listeners.forEach { it.onError(route) }
-    }
-
-    internal fun handleEngineAction(action: String) {
-        listeners.forEach { it.onAction(action) }
-    }
-
-    internal fun logView(messageId: String) {
+    private fun logView(messageId: String) {
         ensureInitialized()
 
         GlobalScope.launch {
@@ -193,19 +197,70 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
 
     private fun showMessage(configuration: Configuration, messageId: String) {
         with(configuration) {
-            val intent = GistActivity.newIntent(
-                application,
-                organizationId,
-                projectId,
-                engineEndpoint,
-                identityEndpoint,
-                messageId
-            )
+            if (currentMessageId == null) {
+                currentMessageId = messageId
+                val uiHandler = Handler(application.mainLooper)
+                val runnable = Runnable {
+                    bourbonEngine = BourbonEngine(application, BOURBON_ENGINE_ID).apply {
+                        setup(
+                            EngineConfiguration(
+                                organizationId = organizationId,
+                                projectId = projectId,
+                                engineEndpoint = engineEndpoint,
+                                authenticationEndpoint = identityEndpoint,
+                                engineVersion = 1.0,
+                                configurationVersion = 1.0,
+                                mainRoute = messageId
+                            )
+                        )
 
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        setListener(object : BourbonEngineListener {
+                            var isInitialLoad = true
+                            override fun onBootstrapped() {
+                            }
 
-            application.startActivity(intent)
+                            override fun onRouteChanged(newRoute: String) {
+                            }
+
+                            override fun onRouteError(route: String) {
+                                handleEngineRouteError(route)
+                            }
+
+                            override fun onRouteLoaded(route: String) {
+                                if (isInitialLoad) {
+                                    isInitialLoad = false
+
+                                    val isAppStillRunning = resumedActivities.isNotEmpty()
+                                    if (isAppStillRunning) {
+                                        handleEngineRouteLoaded(messageId)
+                                    } else {
+                                        // App was paused between the request and the time the engine was loaded.
+                                        // Since the activity cannot be shown in this state, set the message id as
+                                        // pending and show it when the app is resumed.
+                                        pendingMessageId = route
+                                    }
+                                }
+                            }
+
+                            override fun onTap(action: String) {
+                                when (action) {
+                                    ACTION_CLOSE -> handleEngineRouteClosed(messageId)
+                                    else -> handleEngineAction(action)
+                                }
+                            }
+                        })
+                    }
+                }
+
+                uiHandler.post(runnable)
+            }
         }
+    }
+
+    private fun showMessageActivity() {
+        val intent = GistActivity.newIntent(application)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        application.startActivity(intent)
     }
 
     private suspend fun getConfiguration(): Configuration {
@@ -253,6 +308,26 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         }
     }
 
+    private fun handleEngineRouteLoaded(route: String) {
+        showMessageActivity()
+        logView(route)
+        listeners.forEach { it.onMessageShown(route) }
+    }
+
+    private fun handleEngineRouteClosed(route: String) {
+        currentMessageId = null
+        bourbonEngine = null
+        listeners.forEach { it.onMessageDismissed(route) }
+    }
+
+    private fun handleEngineRouteError(route: String) {
+        listeners.forEach { it.onError(route) }
+    }
+
+    private fun handleEngineAction(action: String) {
+        listeners.forEach { it.onAction(action) }
+    }
+
     private fun getUserToken(): String? {
         return sharedPreferences.getString(SHARED_PREFERENCES_USER_TOKEN_KEY, null)
     }
@@ -271,7 +346,6 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
 }
 
 interface GistListener {
-
     fun onMessageShown(messageId: String)
 
     fun onMessageDismissed(messageId: String)

@@ -1,132 +1,68 @@
 package sh.bourbon.gist.presentation
 
+import android.animation.AnimatorInflater
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.view.View
-import android.view.animation.AnimationUtils
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.animation.doOnEnd
 import kotlinx.android.synthetic.main.activity_gist.*
-import sh.bourbon.engine.BourbonEngineListener
-import sh.bourbon.engine.EngineConfiguration
-import sh.bourbon.engine.RouteBehaviour
 import sh.bourbon.gist.R
 
 
-// TODO: Mark messages as seen when done
-class GistActivity : AppCompatActivity() {
-
+class GistActivity : AppCompatActivity(), GistListener {
     companion object {
-        private const val EXTRA_ORGANIZATION_ID = "EXTRA_ORGANIZATION_ID"
-        private const val EXTRA_PROJECT_ID = "EXTRA_PROJECT_ID"
-        private const val EXTRA_ENGINE_ENDPOINT = "EXTRA_ENGINE_ENDPOINT"
-        private const val EXTRA_IDENTITY_ENDPOINT = "EXTRA_IDENTITY_ENDPOINT"
-        private const val EXTRA_MESSAGE_ID = "EXTRA_MESSAGE_ID"
-
-        private const val ACTION_CLOSE = "gist://close"
-
-        fun newIntent(
-            context: Context,
-            organizationId: String,
-            projectId: String,
-            engineEndpoint: String,
-            identityEndpoint: String,
-            messageId: String
-        ): Intent {
-            return Intent(context, GistActivity::class.java).apply {
-                putExtra(EXTRA_ORGANIZATION_ID, organizationId)
-                putExtra(EXTRA_PROJECT_ID, projectId)
-                putExtra(EXTRA_ENGINE_ENDPOINT, engineEndpoint)
-                putExtra(EXTRA_IDENTITY_ENDPOINT, identityEndpoint)
-                putExtra(EXTRA_MESSAGE_ID, messageId)
-            }
+        fun newIntent(context: Context): Intent {
+            return Intent(context, GistActivity::class.java)
         }
-    }
-
-    private val organizationId by lazy {
-        intent.getStringExtra(EXTRA_ORGANIZATION_ID) ?: throw createArgException()
-    }
-    private val projectId by lazy {
-        intent.getStringExtra(EXTRA_PROJECT_ID) ?: throw createArgException()
-    }
-    private val engineEndpoint by lazy {
-        intent.getStringExtra(EXTRA_ENGINE_ENDPOINT)
-            ?: throw createArgException()
-    }
-    private val identityEndpoint by lazy {
-        intent.getStringExtra(EXTRA_IDENTITY_ENDPOINT)
-            ?: throw createArgException()
-    }
-    private val messageId by lazy {
-        intent.getStringExtra(EXTRA_MESSAGE_ID)
-            ?: throw createArgException()
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         setContentView(R.layout.activity_gist)
 
-        engineView.setup(
-            EngineConfiguration(
-                organizationId = organizationId,
-                projectId = projectId,
-                engineEndpoint = engineEndpoint,
-                authenticationEndpoint = identityEndpoint,
-                engineVersion = 1.0,
-                configurationVersion = 1.0,
-                mainRoute = messageId
-            )
-        )
+        engineView.setup(GistSdk.BOURBON_ENGINE_ID, true)
 
-        engineView.setListener(object : BourbonEngineListener {
-            var isInitialLoad = true
-
-            override fun onBootstrapped() {
-            }
-
-            override fun onRouteChanged(newRoute: String) {
-            }
-
-            override fun onRouteError(route: String) {
-                GistSdk.handleEngineRouteError(route)
-            }
-
-            override fun onRouteLoaded(route: String) {
-                GistSdk.handleEngineRouteLoaded(route)
-
-                if (isInitialLoad) {
-                    isInitialLoad = false
-
-                    // Slide up engine view
-                    animateEngineEnter()
-
-                    // Notify Gist that the message has been viewed
-                    GistSdk.logView(messageId)
-                }
-            }
-
-            override fun onTap(action: String) {
-                when (action) {
-                    ACTION_CLOSE -> {
-                        GistSdk.handleEngineRouteClosed(messageId)
-                        finish()
-                    }
-                    else -> GistSdk.handleEngineAction(action)
-                }
-            }
-        })
+        val animation = AnimatorInflater.loadAnimator(this, R.animator.animate_in);
+        animation.startDelay = 1000 // Delay animation to avoid TextureView jitter
+        animation.setTarget(engineView)
+        animation.start()
     }
 
-    private fun animateEngineEnter() {
-        val slideUp = AnimationUtils.loadAnimation(this@GistActivity, R.anim.anim_in)
-        slideUp.startOffset = 1_000 // Offset animation to avoid TextureView jitter
+    override fun onResume() {
+        super.onResume()
 
-        engineView.visibility = View.VISIBLE
-        engineView.startAnimation(slideUp)
+        GistSdk.addListener(this)
     }
 
-    private fun createArgException(): Exception {
-        return IllegalArgumentException("GistActivity must be created using GistActivity.newIntent")
+    override fun onPause() {
+        GistSdk.removeListener(this)
+
+        super.onPause()
+    }
+
+    override fun finish() {
+        val animation = AnimatorInflater.loadAnimator(this, R.animator.animate_out)
+        animation.setTarget(engineView)
+        animation.start()
+        animation.doOnEnd {
+            super.finish()
+        }
+    }
+
+    override fun onMessageShown(messageId: String) {
+    }
+
+    override fun onMessageDismissed(messageId: String) {
+        // Message was cancelled, close activity
+        finish()
+    }
+
+    override fun onAction(action: String) {
+    }
+
+    override fun onError(messageId: String) {
+        // Error displaying message, close activity
+        finish()
     }
 }
