@@ -187,8 +187,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
 
         GlobalScope.launch {
             try {
-                val userToken = getUserToken() ?: throw Exception("User token not set")
-                gistService.logView(MessageView(messageId, userToken))
+                gistService.logView(MessageView(messageId, getUserToken()))
             } catch (e: Exception) {
                 Log.e(tag, "Failed to log message view: ${e.message}", e)
             }
