@@ -1,8 +1,11 @@
 package sh.bourbon.gist.presentation
 
-import android.content.Context
+import android.app.Activity
+import android.app.Application
 import android.content.Context.MODE_PRIVATE
 import android.content.Intent
+import android.os.Bundle
+import android.os.Handler
 import android.util.Log
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.GlobalScope
@@ -13,6 +16,9 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import sh.bourbon.engine.BourbonEngine
+import sh.bourbon.engine.BourbonEngineListener
+import sh.bourbon.engine.EngineConfiguration
 import sh.bourbon.gist.BuildConfig
 import sh.bourbon.gist.data.model.Configuration
 import sh.bourbon.gist.data.model.MessageView
@@ -20,12 +26,16 @@ import sh.bourbon.gist.data.repository.GistService
 import java.util.*
 
 
-object GistSdk {
+object GistSdk : Application.ActivityLifecycleCallbacks {
+
+    internal const val BOURBON_ENGINE_ID = "gistSdk"
 
     private const val ORGANIZATION_ID_HEADER = "X-Bourbon-Organization-Id"
     private const val SHARED_PREFERENCES_NAME = "gist-sdk"
     private const val SHARED_PREFERENCES_USER_TOKEN_KEY = "userToken"
     private const val POLL_INTERVAL = 10_000L
+
+    private const val ACTION_CLOSE = "gist://close"
 
     private val tag by lazy { this::class.java.simpleName }
 
@@ -49,33 +59,86 @@ object GistSdk {
     }
 
     private val sharedPreferences by lazy {
-        context.getSharedPreferences(SHARED_PREFERENCES_NAME, MODE_PRIVATE)
+        application.getSharedPreferences(SHARED_PREFERENCES_NAME, MODE_PRIVATE)
     }
 
     private lateinit var organizationId: String
-    private lateinit var context: Context
+    private lateinit var application: Application
 
     private val listeners: MutableList<GistListener> = mutableListOf()
+
+    private var resumedActivities = mutableSetOf<String>()
 
     private var observeUserMessagesJob: Job? = null
     private var timer: Timer? = null
     private var configuration: Configuration? = null
     private var isInitialized = false
+    private var bourbonEngine: BourbonEngine? = null
+    private var currentMessageId: String? = null
+    private var pendingMessageId: String? = null
 
-    fun init(context: Context, organizationId: String) {
-        this.context = context
+    override fun onActivityCreated(activity: Activity, p1: Bundle?) {
+    }
+
+    override fun onActivityResumed(activity: Activity) {
+        resumedActivities.add(activity.javaClass.name)
+
+        // Start polling if app is resumed and user messages are not being observed
+        val isNotObservingMessages =
+            observeUserMessagesJob == null || observeUserMessagesJob?.isCancelled == true
+
+        if (isAppResumed() && isNotObservingMessages) {
+            getUserToken()?.let { userToken -> observeMessagesForUser(userToken) }
+        }
+
+        // Show any pending messages
+        pendingMessageId?.let { messageId ->
+            pendingMessageId = null
+            handleEngineRouteLoaded(messageId)
+        }
+    }
+
+    override fun onActivityPaused(activity: Activity) {
+        resumedActivities.remove(activity.javaClass.name)
+
+        // Stop polling if app is in background
+        if (!isAppResumed()) {
+            observeUserMessagesJob?.cancel()
+            observeUserMessagesJob = null
+        }
+    }
+
+    override fun onActivityStarted(activity: Activity) {
+    }
+
+    override fun onActivityStopped(activity: Activity) {
+    }
+
+    override fun onActivityDestroyed(activity: Activity) {
+        if (activity is GistActivity) {
+            currentMessageId?.let { currentMessageId -> handleEngineRouteClosed(currentMessageId) }
+        }
+    }
+
+    override fun onActivitySaveInstanceState(activity: Activity, p1: Bundle) {
+    }
+
+    fun init(application: Application, organizationId: String) {
+        this.application = application
         this.organizationId = organizationId
         this.isInitialized = true
+
+        application.registerActivityLifecycleCallbacks(this)
 
         GlobalScope.launch {
             try {
                 // Pre-fetch configuration
-                gistService.fetchConfiguration()
+                getConfiguration()
 
                 // Observe user messages if user token is set
                 getUserToken()?.let { userToken -> observeMessagesForUser(userToken) }
             } catch (e: Exception) {
-                Log.e(tag, "Failed to fetch configuration: ${e.message}", e)
+                Log.e(tag, e.message, e)
             }
         }
     }
@@ -119,19 +182,7 @@ object GistSdk {
         listeners.clear()
     }
 
-    internal fun handleRouteLoaded(route: String) {
-        listeners.forEach { it.onLoaded(route) }
-    }
-
-    internal fun handleRouteError(route: String) {
-        listeners.forEach { it.onError(route) }
-    }
-
-    internal fun handleAction(action: String) {
-        listeners.forEach { it.onAction(action) }
-    }
-
-    internal fun logView(messageId: String) {
+    private fun logView(messageId: String) {
         ensureInitialized()
 
         GlobalScope.launch {
@@ -146,22 +197,71 @@ object GistSdk {
 
     private fun showMessage(configuration: Configuration, messageId: String) {
         with(configuration) {
-            val intent = GistActivity.newIntent(
-                context,
-                organizationId,
-                projectId,
-                engineEndpoint,
-                identityEndpoint,
-                messageId
-            )
+            if (currentMessageId == null) {
+                currentMessageId = messageId
+                val uiHandler = Handler(application.mainLooper)
+                val runnable = Runnable {
+                    bourbonEngine = BourbonEngine(application, BOURBON_ENGINE_ID).apply {
+                        setup(
+                            EngineConfiguration(
+                                organizationId = organizationId,
+                                projectId = projectId,
+                                engineEndpoint = engineEndpoint,
+                                authenticationEndpoint = identityEndpoint,
+                                engineVersion = 1.0,
+                                configurationVersion = 1.0,
+                                mainRoute = messageId
+                            )
+                        )
 
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        setListener(object : BourbonEngineListener {
+                            var isInitialLoad = true
+                            override fun onBootstrapped() {
+                            }
 
-            context.startActivity(intent)
+                            override fun onRouteChanged(newRoute: String) {
+                            }
+
+                            override fun onRouteError(route: String) {
+                                handleEngineRouteError(route)
+                            }
+
+                            override fun onRouteLoaded(route: String) {
+                                if (isInitialLoad) {
+                                    isInitialLoad = false
+
+                                    val isAppStillRunning = resumedActivities.isNotEmpty()
+                                    if (isAppStillRunning) {
+                                        handleEngineRouteLoaded(messageId)
+                                    } else {
+                                        // App was paused between the request and the time the engine was loaded.
+                                        // Since the activity cannot be shown in this state, set the message id as
+                                        // pending and show it when the app is resumed.
+                                        pendingMessageId = route
+                                    }
+                                }
+                            }
+
+                            override fun onTap(action: String) {
+                                when (action) {
+                                    ACTION_CLOSE -> handleEngineRouteClosed(messageId)
+                                    else -> handleEngineAction(action)
+                                }
+                            }
+                        })
+                    }
+                }
+
+                uiHandler.post(runnable)
+            }
         }
     }
 
-    private fun canShowMessage() = !GistActivity.isShown
+    private fun showMessageActivity() {
+        val intent = GistActivity.newIntent(application)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        application.startActivity(intent)
+    }
 
     private suspend fun getConfiguration(): Configuration {
         val existingConfiguration = configuration
@@ -189,18 +289,43 @@ object GistSdk {
                 // Poll for user messages
                 val ticker = ticker(POLL_INTERVAL, context = this.coroutineContext)
                 for (tick in ticker) {
-                    if (canShowMessage()) {
-                        val latestMessages = gistService.fetchMessagesForUser(userToken)
-                        showMessage(configuration, latestMessages.first().messageId)
+                    val latestMessagesResponse = gistService.fetchMessagesForUser(userToken)
+                    if (latestMessagesResponse.code() == 204) {
+                        // No content, don't do anything
+                        continue
+                    } else if (latestMessagesResponse.isSuccessful) {
+                        latestMessagesResponse.body()?.last()?.let {
+                            if (canShowMessage()) showMessage(configuration, it.messageId)
+                        }
                     }
                 }
             } catch (e: CancellationException) {
                 // Co-routine was cancelled, cancel internal timer
                 timer?.cancel()
             } catch (e: Exception) {
-                Log.e(tag, "Failed to fetch latest messages: ${e.message}", e)
+                Log.e(tag, "Failed to get user messages: ${e.message}", e)
             }
         }
+    }
+
+    private fun handleEngineRouteLoaded(route: String) {
+        showMessageActivity()
+        logView(route)
+        listeners.forEach { it.onMessageShown(route) }
+    }
+
+    private fun handleEngineRouteClosed(route: String) {
+        currentMessageId = null
+        bourbonEngine = null
+        listeners.forEach { it.onMessageDismissed(route) }
+    }
+
+    private fun handleEngineRouteError(route: String) {
+        listeners.forEach { it.onError(route) }
+    }
+
+    private fun handleEngineAction(action: String) {
+        listeners.forEach { it.onAction(action) }
     }
 
     private fun getUserToken(): String? {
@@ -210,13 +335,22 @@ object GistSdk {
     private fun ensureInitialized() {
         if (!isInitialized) throw IllegalStateException("GistSdk must be initialized by calling GistSdk.init()")
     }
+
+    private fun canShowMessage(): Boolean {
+        return isAppResumed() && !isGistActivityResumed()
+    }
+
+    private fun isAppResumed() = resumedActivities.isNotEmpty()
+
+    private fun isGistActivityResumed() = resumedActivities.contains(GistActivity::class.java.name)
 }
 
 interface GistListener {
+    fun onMessageShown(messageId: String)
 
-    fun onLoaded(route: String)
-
-    fun onError(route: String)
+    fun onMessageDismissed(messageId: String)
 
     fun onAction(action: String)
+
+    fun onError(messageId: String)
 }

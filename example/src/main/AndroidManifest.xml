@@ -21,7 +21,9 @@
             </intent-filter>
         </activity>
 
-        <activity android:name="sh.bourbon.gist.presentation.GistActivity" />
+        <activity
+            android:name="sh.bourbon.gist.presentation.GistActivity"
+            android:theme="@style/GistActivityTheme" />
 
     </application>
 
