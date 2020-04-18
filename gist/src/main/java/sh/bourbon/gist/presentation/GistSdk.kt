@@ -225,6 +225,10 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
                                 handleEngineRouteError(route)
                             }
 
+                            override fun onError() {
+                                handleEngineRouteError(messageId)
+                            }
+
                             override fun onRouteLoaded(route: String) {
                                 if (isInitialLoad) {
                                     isInitialLoad = false
@@ -321,6 +325,8 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
 
     private fun handleEngineRouteError(route: String) {
         listeners.forEach { it.onError(route) }
+        currentMessageId = null
+        bourbonEngine = null
     }
 
     private fun handleEngineAction(action: String) {
