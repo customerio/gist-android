@@ -7,6 +7,18 @@ Gist gives you access to a library of ready built micro-experiences that can be 
 implementation 'sh.bourbon:gist:1.+'
 ```
 
+## Getting the shared Gist instance
+A shared Gist instance can be fetched using `GistSdk.getInstance()`. When using Kotlin, the shared instanced can also be accessed directly by calling the `GistSdk` object.
+
+```kotlin
+// Fetch the shared instance in Java or Kotlin
+val gist = GistSdk.getInstance()
+gist.init(this, "Your-Key")
+
+// The GistSdk object can also be used directly in Kotlin
+GistSdk.init(this, "Your-Key")
+```
+
 ## Setup
 Initialize Gist inside the application’s `onCreate` method. The Organization Id property can be retrieved from the Gist dashboard.
 
