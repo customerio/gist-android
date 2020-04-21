@@ -4,7 +4,7 @@ Gist gives you access to a library of ready built micro-experiences that can be 
 
 ## Installation
 ```gradle
-implementation ‘sh.bourbon:gist:1.+’
+implementation 'sh.bourbon:gist:1.+'
 ```
 
 ## Setup
