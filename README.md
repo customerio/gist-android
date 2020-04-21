@@ -59,4 +59,4 @@ interface GistListener {
 Gist enables you to plug in external integrations that trigger in-app messages from external sources.
 
 ### A list of available integrations can be found below:
-- [Gist Firebase](https://gitlab.com/bourbonltd/gist-firebase-apple)
+- [Gist Firebase](https://gitlab.com/bourbonltd/gist-firebase-android)
