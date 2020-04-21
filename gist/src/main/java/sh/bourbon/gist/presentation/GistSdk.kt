@@ -170,6 +170,10 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         }
     }
 
+    fun dismissMessage() {
+        currentMessageId?.let { messageId -> handleEngineRouteClosed(messageId) }
+    }
+
     fun addListener(listener: GistListener) {
         listeners.add(listener)
     }

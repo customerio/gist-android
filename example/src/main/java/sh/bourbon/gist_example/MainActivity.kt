@@ -10,17 +10,19 @@ import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
 
+    private val tag by lazy { this::class.java.simpleName }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         GistSdk.addListener(object : GistListener {
             override fun onMessageShown(messageId: String) {
-                Log.d("Main Activity", "Message Shown")
+                Log.d(tag, "Message Shown")
             }
 
             override fun onMessageDismissed(messageId: String) {
-                Log.d("Main Activity", "Message Dismissed")
+                Log.d(tag, "Message Dismissed")
             }
 
             override fun onAction(action: String) {
@@ -32,7 +34,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onError(messageId: String) {
-                Log.d("Main Activity", "Message Error")
+                Log.d(tag, "Message Error")
             }
         })
 
