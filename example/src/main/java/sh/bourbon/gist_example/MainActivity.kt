@@ -11,12 +11,13 @@ import kotlinx.android.synthetic.main.activity_main.*
 class MainActivity : AppCompatActivity() {
 
     private val tag by lazy { this::class.java.simpleName }
+    private val gistSdk by lazy { GistSdk.getInstance() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        GistSdk.addListener(object : GistListener {
+        gistSdk.addListener(object : GistListener {
             override fun onMessageShown(messageId: String) {
                 Log.d(tag, "Message Shown")
             }
@@ -38,8 +39,6 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
-        launchButton.setOnClickListener {
-            GistSdk.showMessage("expired")
-        }
+        launchButton.setOnClickListener { gistSdk.showMessage("expired") }
     }
 }
