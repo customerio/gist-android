@@ -77,6 +77,9 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
     private var currentMessageId: String? = null
     private var pendingMessageId: String? = null
 
+    @JvmStatic
+    fun getInstance() = this
+
     override fun onActivityCreated(activity: Activity, p1: Bundle?) {
     }
 
