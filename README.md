@@ -50,10 +50,10 @@ The library exposes a listener which you can hook into, this gives you the optio
 
 ```kotlin
 interface GistListener {
-    fun onMessageShown(messageId: String)
-    fun onMessageDismissed(messageId: String)
+    fun onMessageShown(messageRoute: String)
+    fun onMessageDismissed(messageRoute: String)
     fun onAction(action: String)
-    fun onError(messageId: String)
+    fun onError(messageRoute: String)
 }
 ```
 

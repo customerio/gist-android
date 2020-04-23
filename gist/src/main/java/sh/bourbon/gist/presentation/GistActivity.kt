@@ -50,10 +50,10 @@ class GistActivity : AppCompatActivity(), GistListener {
         }
     }
 
-    override fun onMessageShown(messageId: String) {
+    override fun onMessageShown(messageRoute: String) {
     }
 
-    override fun onMessageDismissed(messageId: String) {
+    override fun onMessageDismissed(messageRoute: String) {
         // Message was cancelled, close activity
         finish()
     }
@@ -61,7 +61,7 @@ class GistActivity : AppCompatActivity(), GistListener {
     override fun onAction(action: String) {
     }
 
-    override fun onError(messageId: String) {
+    override fun onError(messageRoute: String) {
         // Error displaying message, close activity
         finish()
     }
