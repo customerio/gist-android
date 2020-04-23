@@ -74,7 +74,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
     private var configuration: Configuration? = null
     private var isInitialized = false
     private var bourbonEngine: BourbonEngine? = null
-    private var currentMessageId: String? = null
+    private var currentMessage: String? = null
     private var pendingMessageId: String? = null
 
     @JvmStatic
@@ -119,7 +119,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
 
     override fun onActivityDestroyed(activity: Activity) {
         if (activity is GistActivity) {
-            currentMessageId?.let { currentMessageId -> handleEngineRouteClosed(currentMessageId) }
+            currentMessage?.let { currentMessage -> handleEngineRouteClosed(currentMessage) }
         }
     }
 
@@ -174,7 +174,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
     }
 
     fun dismissMessage() {
-        currentMessageId?.let { messageId -> handleEngineRouteClosed(messageId) }
+        currentMessage?.let { currentMessage -> handleEngineRouteClosed(currentMessage) }
     }
 
     fun addListener(listener: GistListener) {
@@ -201,10 +201,10 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         }
     }
 
-    private fun showMessage(configuration: Configuration, messageId: String) {
+    private fun showMessage(configuration: Configuration, messageRoute: String) {
         with(configuration) {
-            if (currentMessageId == null) {
-                currentMessageId = messageId
+            if (currentMessage == null) {
+                currentMessage = messageRoute
                 val uiHandler = Handler(application.mainLooper)
                 val runnable = Runnable {
                     bourbonEngine = BourbonEngine(application, BOURBON_ENGINE_ID).apply {
@@ -216,7 +216,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
                                 authenticationEndpoint = identityEndpoint,
                                 engineVersion = 1.0,
                                 configurationVersion = 1.0,
-                                mainRoute = messageId
+                                mainRoute = messageRoute
                             )
                         )
 
@@ -233,7 +233,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
                             }
 
                             override fun onError() {
-                                handleEngineRouteError(messageId)
+                                handleEngineRouteError(messageRoute)
                             }
 
                             override fun onRouteLoaded(route: String) {
@@ -242,7 +242,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
 
                                     val isAppStillRunning = resumedActivities.isNotEmpty()
                                     if (isAppStillRunning) {
-                                        handleEngineRouteLoaded(messageId)
+                                        handleEngineRouteLoaded(messageRoute)
                                     } else {
                                         // App was paused between the request and the time the engine was loaded.
                                         // Since the activity cannot be shown in this state, set the message id as
@@ -254,7 +254,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
 
                             override fun onTap(action: String) {
                                 when (action) {
-                                    ACTION_CLOSE -> handleEngineRouteClosed(messageId)
+                                    ACTION_CLOSE -> handleEngineRouteClosed(messageRoute)
                                     else -> handleEngineAction(action)
                                 }
                             }
@@ -305,7 +305,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
                         continue
                     } else if (latestMessagesResponse.isSuccessful) {
                         latestMessagesResponse.body()?.last()?.let {
-                            if (canShowMessage()) showMessage(configuration, it.messageId)
+                            if (canShowMessage()) showMessage(configuration, it.route)
                         }
                     }
                 }
@@ -325,14 +325,14 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
     }
 
     private fun handleEngineRouteClosed(route: String) {
-        currentMessageId = null
+        currentMessage = null
         bourbonEngine = null
         listeners.forEach { it.onMessageDismissed(route) }
     }
 
     private fun handleEngineRouteError(route: String) {
         listeners.forEach { it.onError(route) }
-        currentMessageId = null
+        currentMessage = null
         bourbonEngine = null
     }
 
@@ -358,11 +358,11 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
 }
 
 interface GistListener {
-    fun onMessageShown(messageId: String)
+    fun onMessageShown(messageRoute: String)
 
-    fun onMessageDismissed(messageId: String)
+    fun onMessageDismissed(messageRoute: String)
 
     fun onAction(action: String)
 
-    fun onError(messageId: String)
+    fun onError(messageRoute: String)
 }
