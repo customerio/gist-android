@@ -39,6 +39,6 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
-        launchButton.setOnClickListener { gistSdk.showMessage("expired") }
+        launchButton.setOnClickListener { gistSdk.showMessage("demo") }
     }
 }
