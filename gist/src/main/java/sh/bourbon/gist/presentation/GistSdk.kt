@@ -252,10 +252,11 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
                                 }
                             }
 
-                            override fun onTap(action: String) {
-                                when (action) {
-                                    ACTION_CLOSE -> handleEngineRouteClosed(messageRoute)
-                                    else -> handleEngineAction(action)
+                            override fun onTap(action: String, system: Boolean) {
+                                if (action == ACTION_CLOSE || system) {
+                                    handleEngineRouteClosed(messageRoute);
+                                } else {
+                                    handleEngineAction(action)
                                 }
                             }
                         })
