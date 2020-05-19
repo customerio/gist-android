@@ -1,2 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest package="sh.bourbon.gist" />
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="sh.bourbon.gist">
+
+    <application>
+        <activity
+            android:name="sh.bourbon.gist.presentation.GistActivity"
+            android:theme="@style/GistActivityTheme" />
+    </application>
+
+</manifest>
