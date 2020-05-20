@@ -25,7 +25,7 @@ class GistActivity : AppCompatActivity(), GistListener {
 
         val animation = AnimatorInflater.loadAnimator(this, R.animator.animate_in);
         animation.startDelay = 1000 // Delay animation to avoid TextureView jitter
-        animation.setTarget(engineView)
+        animation.setTarget(gistView)
         animation.start()
     }
 
@@ -39,11 +39,12 @@ class GistActivity : AppCompatActivity(), GistListener {
         GistSdk.removeListener(this)
 
         super.onPause()
+        overridePendingTransition(0, 0)
     }
 
     override fun finish() {
         val animation = AnimatorInflater.loadAnimator(this, R.animator.animate_out)
-        animation.setTarget(engineView)
+        animation.setTarget(gistView)
         animation.start()
         animation.doOnEnd {
             super.finish()
