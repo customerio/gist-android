@@ -146,6 +146,14 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         }
     }
 
+    fun clearUserToken() {
+        ensureInitialized()
+        // Remove user token from preferences & cancel job / timer.
+        sharedPreferences.edit().remove(SHARED_PREFERENCES_USER_TOKEN_KEY).apply()
+        observeUserMessagesJob?.cancel()
+        timer = null
+    }
+
     fun setUserToken(userToken: String) {
         ensureInitialized()
 

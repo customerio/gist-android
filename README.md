@@ -31,6 +31,10 @@ If your app is relying on Gist’s web hook service to trigger in-app messages, 
 ```kotlin
 GistSdk.getInstance().setUserToken("Unique-User-Token")
 ```
+To clear the user token:
+```kotlin
+GistSdk.getInstance().clearUserToken()
+```
 
 ## Manually Triggering In-App Messages
 Gist gives you the option to programmatically trigger in-app messaging flows within your app.
