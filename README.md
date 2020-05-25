@@ -56,7 +56,7 @@ The library exposes a listener which you can hook into, this gives you the optio
 interface GistListener {
     fun onMessageShown(messageRoute: String)
     fun onMessageDismissed(messageRoute: String)
-    fun onAction(action: String)
+    fun onAction(currentRoute: String, action: String)    
     fun onError(messageRoute: String)
 }
 ```
