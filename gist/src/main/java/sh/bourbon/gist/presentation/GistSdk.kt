@@ -230,6 +230,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
 
                         setListener(object : BourbonEngineListener {
                             var isInitialLoad = true
+                            var currentRoute = ""
                             override fun onBootstrapped() {
                             }
 
@@ -245,9 +246,9 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
                             }
 
                             override fun onRouteLoaded(route: String) {
+                                currentRoute = route
                                 if (isInitialLoad) {
                                     isInitialLoad = false
-
                                     val isAppStillRunning = resumedActivities.isNotEmpty()
                                     if (isAppStillRunning) {
                                         handleEngineRouteLoaded(messageRoute)
@@ -263,9 +264,8 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
                             override fun onTap(action: String, system: Boolean) {
                                 if (action == ACTION_CLOSE || system) {
                                     handleEngineRouteClosed(messageRoute);
-                                } else {
-                                    handleEngineAction(action)
                                 }
+                                handleEngineAction(currentRoute, action)
                             }
                         })
                     }
@@ -345,8 +345,8 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         bourbonEngine = null
     }
 
-    private fun handleEngineAction(action: String) {
-        listeners.forEach { it.onAction(action) }
+    private fun handleEngineAction(currentRoute: String, action: String) {
+        listeners.forEach { it.onAction(currentRoute, action) }
     }
 
     private fun getUserToken(): String? {
@@ -371,7 +371,7 @@ interface GistListener {
 
     fun onMessageDismissed(messageRoute: String)
 
-    fun onAction(action: String)
+    fun onAction(currentRoute: String, action: String)
 
     fun onError(messageRoute: String)
 }

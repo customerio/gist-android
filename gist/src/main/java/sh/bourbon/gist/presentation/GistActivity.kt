@@ -59,7 +59,7 @@ class GistActivity : AppCompatActivity(), GistListener {
         finish()
     }
 
-    override fun onAction(action: String) {
+    override fun onAction(currentRoute: String, action: String) {
     }
 
     override fun onError(messageRoute: String) {

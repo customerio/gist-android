@@ -26,10 +26,10 @@ class MainActivity : AppCompatActivity() {
                 Log.d(tag, "Message Dismissed")
             }
 
-            override fun onAction(action: String) {
+            override fun onAction(currentRoute: String, action: String) {
                 Toast.makeText(
                     this@MainActivity,
-                    "Action received: $action",
+                    "Action received: $action from route $currentRoute",
                     Toast.LENGTH_LONG
                 ).show()
             }
