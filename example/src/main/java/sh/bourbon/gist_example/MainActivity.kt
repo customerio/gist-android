@@ -39,6 +39,6 @@ class MainActivity : AppCompatActivity() {
             }
         })
 
-        launchButton.setOnClickListener { gistSdk.showMessage("demo") }
+        launchButton.setOnClickListener { gistSdk.showMessage("welcome") }
     }
 }
