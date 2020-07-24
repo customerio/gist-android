@@ -42,7 +42,7 @@ ext {
 
     publishedGroupId = 'sh.bourbon'
     artifact = 'gist'
-    libraryVersion = '1.10.0'
+    libraryVersion = '1.11.0'
 
     libraryDescription = 'In-app messaging that converts'
 
