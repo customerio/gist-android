@@ -6,7 +6,7 @@ apply plugin: 'com.github.dcendents.android-maven'
 
 android {
     compileSdkVersion 29
-    buildToolsVersion "29.0.0"
+    buildToolsVersion "29.0.2"
     defaultConfig {
         minSdkVersion 16
         targetSdkVersion 29
@@ -32,6 +32,7 @@ android {
         jvmTarget = JavaVersion.VERSION_1_8
     }
 }
+
 ext {
     bintrayRepo = "gist-android"
     bintrayName = "sh.bourbon.gist"
@@ -41,7 +42,7 @@ ext {
 
     publishedGroupId = 'sh.bourbon'
     artifact = 'gist'
-    libraryVersion = '1.10.0'
+    libraryVersion = '1.11.0'
 
     libraryDescription = 'In-app messaging that converts'
 
@@ -56,6 +57,7 @@ ext {
     licenseUrl = 'https://gitlab.com/bourbonltd/gist-android/-/raw/master/LICENSE'
     allLicenses = ["Bourbon-Platform-License"]
 }
+
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
@@ -70,7 +72,7 @@ dependencies {
     implementation 'com.squareup.retrofit2:retrofit:2.7.2'
     implementation 'com.squareup.retrofit2:converter-gson:2.7.2'
 
-    implementation 'sh.bourbon:engine:1.5.0'
+    implementation 'sh.bourbon:engine:1.9.0'
 }
 
 apply from: 'install.gradle'
