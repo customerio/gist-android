@@ -42,7 +42,7 @@ ext {
 
     publishedGroupId = 'sh.bourbon'
     artifact = 'gist'
-    libraryVersion = '1.11.0'
+    libraryVersion = '1.12.0'
 
     libraryDescription = 'In-app messaging that converts'
 
@@ -72,7 +72,7 @@ dependencies {
     implementation 'com.squareup.retrofit2:retrofit:2.7.2'
     implementation 'com.squareup.retrofit2:converter-gson:2.7.2'
 
-    implementation 'sh.bourbon:engine:1.9.0'
+    implementation 'sh.bourbon:engine:1.10.0'
 }
 
 apply from: 'install.gradle'
