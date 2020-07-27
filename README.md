@@ -13,6 +13,8 @@ repositories {
 }
 ```
 
+Note: Make sure to use an x86_64 emulator. x86 is not supported.
+
 ## Setup
 Initialize Gist inside the application’s `onCreate` method. A shared Gist instance can be fetched using `GistSdk.getInstance()`.
 When using Kotlin, the shared instanced can also be accessed directly by calling the `GistSdk` object. 
