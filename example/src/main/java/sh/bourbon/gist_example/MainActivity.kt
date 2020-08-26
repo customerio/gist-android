@@ -1,5 +1,6 @@
 package sh.bourbon.gist_example
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -15,6 +16,11 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        if (intent?.action == Intent.ACTION_VIEW) {
+            Log.d(tag, "View Intent: ${intent.dataString}")
+        }
+
         setContentView(R.layout.activity_main)
 
         gistSdk.addListener(object : GistListener {
