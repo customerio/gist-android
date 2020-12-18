@@ -19,18 +19,21 @@ import retrofit2.converter.gson.GsonConverterFactory
 import sh.bourbon.engine.BourbonEngine
 import sh.bourbon.engine.BourbonEngineListener
 import sh.bourbon.engine.EngineConfiguration
+import sh.bourbon.engine.EngineRoute
 import sh.bourbon.gist.BuildConfig
 import sh.bourbon.gist.data.model.Configuration
+import sh.bourbon.gist.data.model.Message
 import sh.bourbon.gist.data.model.MessageView
+import sh.bourbon.gist.data.repository.GistQueueService
 import sh.bourbon.gist.data.repository.GistService
 import java.util.*
-
 
 object GistSdk : Application.ActivityLifecycleCallbacks {
 
     internal const val BOURBON_ENGINE_ID = "gistSdk"
 
     private const val ORGANIZATION_ID_HEADER = "X-Bourbon-Organization-Id"
+    private const val USER_TOKEN_HEADER = "X-Gist-User-Token"
     private const val SHARED_PREFERENCES_NAME = "gist-sdk"
     private const val SHARED_PREFERENCES_USER_TOKEN_KEY = "userToken"
     private const val POLL_INTERVAL = 10_000L
@@ -51,11 +54,45 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
             .build()
 
         Retrofit.Builder()
-            .baseUrl(BuildConfig.API_URL)
+            .baseUrl(BuildConfig.GIST_API_URL)
             .addConverterFactory(GsonConverterFactory.create())
             .client(httpClient)
             .build()
             .create(GistService::class.java)
+    }
+
+    private val gistQueueService by lazy {
+        val httpClient: OkHttpClient
+
+        if (getUserToken() != null) {
+            httpClient = OkHttpClient.Builder()
+                .addInterceptor { chain ->
+                    val request: Request = chain.request().newBuilder()
+                        .addHeader(ORGANIZATION_ID_HEADER, organizationId)
+                        .addHeader(USER_TOKEN_HEADER, getUserToken())
+                        .build()
+
+                    chain.proceed(request)
+                }
+                .build()
+        } else {
+            httpClient = OkHttpClient.Builder()
+                .addInterceptor { chain ->
+                    val request: Request = chain.request().newBuilder()
+                        .addHeader(ORGANIZATION_ID_HEADER, organizationId)
+                        .build()
+
+                    chain.proceed(request)
+                }
+                .build()
+        }
+
+        Retrofit.Builder()
+            .baseUrl(BuildConfig.GIST_QUEUE_API_URL)
+            .addConverterFactory(GsonConverterFactory.create())
+            .client(httpClient)
+            .build()
+            .create(GistQueueService::class.java)
     }
 
     private val sharedPreferences by lazy {
@@ -74,8 +111,8 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
     private var timer: Timer? = null
     private var isInitialized = false
     private var bourbonEngine: BourbonEngine? = null
-    private var currentMessage: String? = null
-    private var pendingMessageId: String? = null
+    private var currentMessage: Message? = null
+    private var pendingMessage: Message? = null
 
     @JvmStatic
     fun getInstance() = this
@@ -95,9 +132,9 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         }
 
         // Show any pending messages
-        pendingMessageId?.let { messageId ->
-            pendingMessageId = null
-            handleEngineRouteLoaded(messageId)
+        pendingMessage?.let { message ->
+            pendingMessage = null
+            handleEngineRouteLoaded(message)
         }
     }
 
@@ -168,13 +205,13 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         }
     }
 
-    fun showMessage(messageId: String) {
+    fun showMessage(message: Message) {
         ensureInitialized()
 
         GlobalScope.launch {
             try {
                 val configuration = getConfiguration()
-                showMessage(configuration, messageId)
+                showMessage(configuration, message)
             } catch (e: Exception) {
                 Log.e(tag, "Failed to show message: ${e.message}", e)
             }
@@ -197,22 +234,26 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         listeners.clear()
     }
 
-    private fun logView(messageId: String) {
+    private fun logView(message: Message) {
         ensureInitialized()
 
         GlobalScope.launch {
             try {
-                gistService.logView(MessageView(messageId, getUserToken()))
+                if (message.queueId != null) {
+                    gistQueueService.logUserMessageView(message.queueId)
+                } else {
+                    gistQueueService.logMessageView(message.messageId)
+                }
             } catch (e: Exception) {
                 Log.e(tag, "Failed to log message view: ${e.message}", e)
             }
         }
     }
 
-    private fun showMessage(configuration: Configuration, messageRoute: String) {
+    private fun showMessage(configuration: Configuration, message: Message) {
         with(configuration) {
             if (currentMessage == null) {
-                currentMessage = messageRoute
+                currentMessage = message
                 val uiHandler = Handler(application.mainLooper)
                 val runnable = Runnable {
                     bourbonEngine = BourbonEngine(application, BOURBON_ENGINE_ID).apply {
@@ -224,7 +265,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
                                 authenticationEndpoint = identityEndpoint,
                                 engineVersion = 1.0,
                                 configurationVersion = 1.0,
-                                mainRoute = messageRoute
+                                engineRoute = EngineRoute(message.messageId, message.properties)
                             )
                         )
 
@@ -238,11 +279,11 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
                             }
 
                             override fun onRouteError(route: String) {
-                                handleEngineRouteError(route)
+                                handleEngineRouteError(message)
                             }
 
                             override fun onError() {
-                                handleEngineRouteError(messageRoute)
+                                handleEngineRouteError(message)
                             }
 
                             override fun onRouteLoaded(route: String) {
@@ -251,19 +292,19 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
                                     isInitialLoad = false
                                     val isAppStillRunning = resumedActivities.isNotEmpty()
                                     if (isAppStillRunning) {
-                                        handleEngineRouteLoaded(messageRoute)
+                                        handleEngineRouteLoaded(message)
                                     } else {
                                         // App was paused between the request and the time the engine was loaded.
                                         // Since the activity cannot be shown in this state, set the message id as
                                         // pending and show it when the app is resumed.
-                                        pendingMessageId = route
+                                        pendingMessage = message
                                     }
                                 }
                             }
 
                             override fun onTap(action: String, system: Boolean) {
                                 if (action == ACTION_CLOSE || system) {
-                                    handleEngineRouteClosed(messageRoute);
+                                    handleEngineRouteClosed(message);
                                 }
                                 handleEngineAction(currentRoute, action)
                             }
@@ -308,13 +349,14 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
                 // Poll for user messages
                 val ticker = ticker(POLL_INTERVAL, context = this.coroutineContext)
                 for (tick in ticker) {
-                    val latestMessagesResponse = gistService.fetchMessagesForUser(userToken)
+                    var list: List<String> = emptyList()
+                    val latestMessagesResponse = gistQueueService.fetchMessagesForUser(list)
                     if (latestMessagesResponse.code() == 204) {
                         // No content, don't do anything
                         continue
                     } else if (latestMessagesResponse.isSuccessful) {
                         latestMessagesResponse.body()?.last()?.let {
-                            if (canShowMessage()) showMessage(configuration, it.route)
+                            if (canShowMessage()) showMessage(configuration, it)
                         }
                     }
                 }
@@ -327,20 +369,20 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         }
     }
 
-    private fun handleEngineRouteLoaded(route: String) {
+    private fun handleEngineRouteLoaded(message: Message) {
         showMessageActivity()
-        logView(route)
-        listeners.forEach { it.onMessageShown(route) }
+        logView(message)
+        listeners.forEach { it.onMessageShown(message) }
     }
 
-    private fun handleEngineRouteClosed(route: String) {
+    private fun handleEngineRouteClosed(message: Message) {
         currentMessage = null
         bourbonEngine = null
-        listeners.forEach { it.onMessageDismissed(route) }
+        listeners.forEach { it.onMessageDismissed(message) }
     }
 
-    private fun handleEngineRouteError(route: String) {
-        listeners.forEach { it.onError(route) }
+    private fun handleEngineRouteError(message: Message) {
+        listeners.forEach { it.onError(message) }
         currentMessage = null
         bourbonEngine = null
     }
@@ -367,11 +409,8 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
 }
 
 interface GistListener {
-    fun onMessageShown(messageRoute: String)
-
-    fun onMessageDismissed(messageRoute: String)
-
+    fun onMessageShown(message: Message)
+    fun onMessageDismissed(message: Message)
+    fun onError(message: Message)
     fun onAction(currentRoute: String, action: String)
-
-    fun onError(messageRoute: String)
 }

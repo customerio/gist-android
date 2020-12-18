@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import sh.bourbon.gist.presentation.GistListener
 import sh.bourbon.gist.presentation.GistSdk
 import kotlinx.android.synthetic.main.activity_main.*
+import sh.bourbon.gist.data.model.Message
 
 class MainActivity : AppCompatActivity() {
 
@@ -24,11 +25,11 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         gistSdk.addListener(object : GistListener {
-            override fun onMessageShown(messageId: String) {
+            override fun onMessageShown(message: Message) {
                 Log.d(tag, "Message Shown")
             }
 
-            override fun onMessageDismissed(messageId: String) {
+            override fun onMessageDismissed(message: Message) {
                 Log.d(tag, "Message Dismissed")
             }
 
@@ -40,11 +41,14 @@ class MainActivity : AppCompatActivity() {
                 ).show()
             }
 
-            override fun onError(messageId: String) {
+            override fun onError(message: Message) {
                 Log.d(tag, "Message Error")
             }
         })
 
-        launchButton.setOnClickListener { gistSdk.showMessage("welcome") }
+        val mainRouteProperties = mutableMapOf<String, Any?>()
+        mainRouteProperties["name"] = "Paul"
+
+        launchButton.setOnClickListener { gistSdk.showMessage(Message("welcome", null, mainRouteProperties)) }
     }
 }
