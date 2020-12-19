@@ -23,7 +23,7 @@ import sh.bourbon.engine.EngineRoute
 import sh.bourbon.gist.BuildConfig
 import sh.bourbon.gist.data.model.Configuration
 import sh.bourbon.gist.data.model.Message
-import sh.bourbon.gist.data.model.MessageView
+import sh.bourbon.gist.data.model.UserMessages
 import sh.bourbon.gist.data.repository.GistQueueService
 import sh.bourbon.gist.data.repository.GistService
 import java.util.*
@@ -113,6 +113,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
     private var bourbonEngine: BourbonEngine? = null
     private var currentMessage: Message? = null
     private var pendingMessage: Message? = null
+    private var topics: List<String> = emptyList()
 
     @JvmStatic
     fun getInstance() = this
@@ -127,8 +128,8 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         val isNotObservingMessages =
             observeUserMessagesJob == null || observeUserMessagesJob?.isCancelled == true
 
-        if (isAppResumed() && isNotObservingMessages) {
-            getUserToken()?.let { userToken -> observeMessagesForUser(userToken) }
+        if (isAppResumed() && getUserToken() != null && isNotObservingMessages) {
+            observeMessagesForUser(topics)
         }
 
         // Show any pending messages
@@ -148,11 +149,9 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         }
     }
 
-    override fun onActivityStarted(activity: Activity) {
-    }
+    override fun onActivityStarted(activity: Activity) {}
 
-    override fun onActivityStopped(activity: Activity) {
-    }
+    override fun onActivityStopped(activity: Activity) {}
 
     override fun onActivityDestroyed(activity: Activity) {
         if (activity is GistActivity) {
@@ -160,8 +159,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         }
     }
 
-    override fun onActivitySaveInstanceState(activity: Activity, p1: Bundle) {
-    }
+    override fun onActivitySaveInstanceState(activity: Activity, p1: Bundle) {}
 
     fun init(application: Application, organizationId: String) {
         this.application = application
@@ -176,11 +174,33 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
                 getConfiguration()
 
                 // Observe user messages if user token is set
-                getUserToken()?.let { userToken -> observeMessagesForUser(userToken) }
+                if (getUserToken() != null) { observeMessagesForUser(topics) }
             } catch (e: Exception) {
                 Log.e(tag, e.message, e)
             }
         }
+    }
+
+    fun addTopic(topic: String) {
+        var topicIndex = topics.indexOf(topic)
+        if (topicIndex == -1) {
+            topics = topics.plus(topic)
+        }
+    }
+
+    fun removeTopic(topic: String) {
+        var topicIndex = topics.indexOf(topic)
+        if (topicIndex > -1) {
+            topics = topics.drop(topicIndex)
+        }
+    }
+
+    fun getTopics(): List<String>{
+        return topics
+    }
+
+    fun clearTopics() {
+        topics = emptyList()
     }
 
     fun clearUserToken() {
@@ -199,7 +219,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
 
         // Try to observe messages for the freshly set user token
         try {
-            observeMessagesForUser(userToken)
+            observeMessagesForUser(topics)
         } catch (e: Exception) {
             Log.e(tag, "Failed to observe messages for user: ${e.message}", e)
         }
@@ -337,7 +357,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         }
     }
 
-    private fun observeMessagesForUser(userToken: String) {
+    private fun observeMessagesForUser(topics: List<String>) {
         // Clean up any previous observers
         observeUserMessagesJob?.cancel()
         timer = null
@@ -349,8 +369,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
                 // Poll for user messages
                 val ticker = ticker(POLL_INTERVAL, context = this.coroutineContext)
                 for (tick in ticker) {
-                    var list: List<String> = emptyList()
-                    val latestMessagesResponse = gistQueueService.fetchMessagesForUser(list)
+                    val latestMessagesResponse = gistQueueService.fetchMessagesForUser(UserMessages(topics))
                     if (latestMessagesResponse.code() == 204) {
                         // No content, don't do anything
                         continue

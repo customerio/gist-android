@@ -5,11 +5,11 @@ import retrofit2.http.Body
 import retrofit2.http.POST
 import retrofit2.http.Path
 import sh.bourbon.gist.data.model.Message
-import sh.bourbon.gist.data.model.MessageView
+import sh.bourbon.gist.data.model.UserMessages
 
 interface GistQueueService {
     @POST("/api/v1/users")
-    suspend fun fetchMessagesForUser(@Body topics: List<String>): Response<List<Message>>
+    suspend fun fetchMessagesForUser(@Body userMessages: UserMessages): Response<List<Message>>
 
     @POST("/api/v1/logs/message/{messageId}")
     suspend fun logMessageView(@Path("messageId") messageId: String)
