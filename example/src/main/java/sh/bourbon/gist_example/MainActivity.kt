@@ -47,8 +47,9 @@ class MainActivity : AppCompatActivity() {
         })
 
         val mainRouteProperties = mutableMapOf<String, Any?>()
-        mainRouteProperties["name"] = "Paul"
+        mainRouteProperties["title"] = "Top Artists"
+        mainRouteProperties["list"] = ArtistsMock.data()
 
-        launchButton.setOnClickListener { gistSdk.showMessage(Message("welcome", null, mainRouteProperties)) }
+        launchButton.setOnClickListener { gistSdk.showMessage(Message("artists", null, mainRouteProperties)) }
     }
 }

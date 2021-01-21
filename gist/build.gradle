@@ -16,8 +16,8 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles 'consumer-rules.pro'
 
-        buildConfigField("String", "GIST_API_URL", '"https://api.dev.gist.build"')
-        buildConfigField("String", "GIST_QUEUE_API_URL", '"https://queue.api.dev.gist.build"')
+        buildConfigField("String", "GIST_API_URL", '"https://api.gist.build"')
+        buildConfigField("String", "GIST_QUEUE_API_URL", '"https://queue.api.gist.build"')
     }
     buildTypes {
         release {
@@ -43,7 +43,7 @@ ext {
 
     publishedGroupId = 'sh.bourbon'
     artifact = 'gist'
-    libraryVersion = '1.15.0'
+    libraryVersion = '1.16.0'
 
     libraryDescription = 'In-app messaging that converts'
 
@@ -73,7 +73,7 @@ dependencies {
     implementation 'com.squareup.retrofit2:retrofit:2.7.2'
     implementation 'com.squareup.retrofit2:converter-gson:2.7.2'
 
-    api 'sh.bourbon:engine:1.14.0'
+    api 'sh.bourbon:engine:1.15.0'
 }
 
 apply from: 'install.gradle'
