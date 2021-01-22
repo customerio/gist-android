@@ -8,6 +8,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.animation.doOnEnd
 import kotlinx.android.synthetic.main.activity_gist.*
 import sh.bourbon.gist.R
+import sh.bourbon.gist.data.model.Message
 
 
 class GistActivity : AppCompatActivity(), GistListener {
@@ -51,19 +52,19 @@ class GistActivity : AppCompatActivity(), GistListener {
         }
     }
 
-    override fun onMessageShown(messageRoute: String) {
+    override fun onMessageShown(message: Message) {
     }
 
-    override fun onMessageDismissed(messageRoute: String) {
+    override fun onMessageDismissed(message: Message) {
         // Message was cancelled, close activity
         finish()
     }
 
-    override fun onAction(currentRoute: String, action: String) {
-    }
-
-    override fun onError(messageRoute: String) {
+    override fun onError(message: Message) {
         // Error displaying message, close activity
         finish()
+    }
+
+    override fun onAction(currentRoute: String, action: String) {
     }
 }
