@@ -16,6 +16,6 @@ class Application : Application() {
         // Set current user ID
         gistSdk.setUserToken(BuildConfig.USER_ID)
 
-        gistSdk.subscribeToTopic("testing")
+        gistSdk.subscribeToTopic("announcements")
     }
 }
