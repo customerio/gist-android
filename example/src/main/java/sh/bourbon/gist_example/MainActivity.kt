@@ -50,6 +50,9 @@ class MainActivity : AppCompatActivity() {
         mainRouteProperties["title"] = "Top Artists"
         mainRouteProperties["list"] = ArtistsMock.data()
 
-        launchButton.setOnClickListener { gistSdk.showMessage(Message("artists", null, mainRouteProperties)) }
+        launchButton.setOnClickListener {
+            val message = Message(messageId = "artists", properties = mainRouteProperties)
+            gistSdk.showMessage(message)
+        }
     }
 }

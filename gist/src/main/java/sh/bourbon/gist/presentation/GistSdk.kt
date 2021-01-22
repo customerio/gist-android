@@ -181,14 +181,14 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         }
     }
 
-    fun addTopic(topic: String) {
+    fun subscribeToTopic(topic: String) {
         var topicIndex = topics.indexOf(topic)
         if (topicIndex == -1) {
             topics = topics.plus(topic)
         }
     }
 
-    fun removeTopic(topic: String) {
+    fun unsubscribeFromTopic(topic: String) {
         var topicIndex = topics.indexOf(topic)
         if (topicIndex > -1) {
             topics = topics.drop(topicIndex)
