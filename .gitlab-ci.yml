@@ -19,8 +19,8 @@ build:
     - ./gradlew assemble
   artifacts:
     paths:
-      - engine/build/outputs/aar/gist-debug.aar
-      - engine/build/outputs/aar/gist-release.aar
+      - gist/build/outputs/aar/gist-debug.aar
+      - gist/build/outputs/aar/gist-release.aar
 
 deploy_to_gitlab:
   stage: deploy
