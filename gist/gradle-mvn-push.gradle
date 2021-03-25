@@ -1,0 +1,69 @@
+apply plugin: 'maven-publish'
+
+def isReleaseBuild() {
+    return System.getenv("CI_COMMIT_TAG") != null
+}
+
+def getVersionName() {
+    if (isReleaseBuild()) {
+        return System.getenv("CI_COMMIT_TAG")
+    } else {
+        if (System.getenv("CI_COMMIT_BRANCH") != null) {
+            String branch = System.getenv("CI_COMMIT_BRANCH").replaceAll("[^a-zA-Z0-9]+","")
+            return "${branch}-dev"
+        } else {
+            return "develop-dev"
+        }
+    }
+}
+
+def getArtifactFilePath() {
+    if (isReleaseBuild()) {
+        return "build/outputs/aar/${project.artifactId}-release.aar"
+    } else {
+        return "build/outputs/aar/${project.artifactId}-debug.aar"
+    }
+}
+
+def getPublicationName() {
+    if (isReleaseBuild()) {
+        return "release"
+    } else {
+        return "debug"
+    }
+}
+
+publishing {
+    publications {
+        "${getPublicationName()}" (MavenPublication) {
+            groupId project.groupId
+            artifactId project.artifactId
+            version getVersionName()
+            artifact getArtifactFilePath()
+
+            // To include project dependencies
+            pom.withXml {
+                def dependencies = asNode().appendNode('dependencies')
+                configurations.getByName("${getPublicationName()}CompileClasspath").getResolvedConfiguration().getFirstLevelModuleDependencies().each {
+                    def dependency = dependencies.appendNode('dependency')
+                    dependency.appendNode('groupId', it.moduleGroup)
+                    dependency.appendNode('artifactId', it.moduleName)
+                    dependency.appendNode('version', it.moduleVersion)
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            url "https://gitlab.com/api/v4/projects/17375052/packages/maven"
+            name "GitLab"
+            credentials(HttpHeaderCredentials) {
+                name = 'Job-Token'
+                value = System.getenv("CI_JOB_TOKEN")
+            }
+            authentication {
+                header(HttpHeaderAuthentication)
+            }
+        }
+    }
+}

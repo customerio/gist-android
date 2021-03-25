@@ -16,19 +16,16 @@ cache:
 build:
   stage: build
   script:
-    - ./gradlew assembleDebug
-  artifacts:
-    paths:
-      - example/build/outputs/apk/example-debug.apk
-
-deploy_to_bintray:
-  stage: deploy
-  only:
-    - tags
-  script:
-    - ./gradlew install
-    - ./gradlew bintrayUpload
+    - ./gradlew assemble
   artifacts:
     paths:
       - gist/build/outputs/aar/gist-debug.aar
-      - gist/build/outputs/aar/gist-relase.aar
+      - gist/build/outputs/aar/gist-release.aar
+
+deploy_to_gitlab:
+  stage: deploy
+  image: gradle:6.5-jdk11
+  script:
+    - 'gradle publish'
+  except:
+    - master
