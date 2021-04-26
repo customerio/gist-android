@@ -62,30 +62,24 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
     }
 
     private val gistQueueService by lazy {
-        val httpClient: OkHttpClient
-
-        if (getUserToken() != null) {
-            httpClient = OkHttpClient.Builder()
-                .addInterceptor { chain ->
+        val httpClient: OkHttpClient = OkHttpClient.Builder()
+            .addInterceptor { chain ->
+                if (getUserToken() != null) {
                     val request: Request = chain.request().newBuilder()
                         .addHeader(ORGANIZATION_ID_HEADER, organizationId)
                         .addHeader(USER_TOKEN_HEADER, getUserToken())
                         .build()
 
                     chain.proceed(request)
-                }
-                .build()
-        } else {
-            httpClient = OkHttpClient.Builder()
-                .addInterceptor { chain ->
+                } else {
                     val request: Request = chain.request().newBuilder()
                         .addHeader(ORGANIZATION_ID_HEADER, organizationId)
                         .build()
 
                     chain.proceed(request)
                 }
-                .build()
-        }
+            }
+            .build()
 
         Retrofit.Builder()
             .baseUrl(BuildConfig.GIST_QUEUE_API_URL)
