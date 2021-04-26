@@ -123,7 +123,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
             observeUserMessagesJob == null || observeUserMessagesJob?.isCancelled == true
 
         if (isAppResumed() && getUserToken() != null && isNotObservingMessages) {
-            observeMessagesForUser(topics)
+            observeMessagesForUser()
         }
 
         // Show any pending messages
@@ -166,7 +166,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
             try {
                 // Observe user messages if user token is set
                 if (getUserToken() != null) {
-                    observeMessagesForUser(topics)
+                    observeMessagesForUser()
                 } else {
                     // Pre-fetch configuration
                     getConfiguration()
@@ -217,7 +217,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
 
             // Try to observe messages for the freshly set user token
             try {
-                observeMessagesForUser(topics)
+                observeMessagesForUser()
             } catch (e: Exception) {
                 Log.e(tag, "Failed to observe messages for user: ${e.message}", e)
             }
@@ -373,7 +373,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         }
     }
 
-    private fun observeMessagesForUser(topics: List<String>) {
+    private fun observeMessagesForUser() {
         // Clean up any previous observers
         observeUserMessagesJob?.cancel()
         timer = null
@@ -387,7 +387,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
                 val ticker = ticker(POLL_INTERVAL, context = this.coroutineContext)
                 for (tick in ticker) {
                     Log.d(tag, "Fetching user messages")
-                    val latestMessagesResponse = gistQueueService.fetchMessagesForUser(UserMessages(topics))
+                    val latestMessagesResponse = gistQueueService.fetchMessagesForUser(UserMessages(getTopics()))
                     if (latestMessagesResponse.code() == 204) {
                         // No content, don't do anything
                         Log.d(tag, "No messages found for user")
