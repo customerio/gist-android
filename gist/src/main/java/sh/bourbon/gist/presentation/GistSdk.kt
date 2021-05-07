@@ -22,8 +22,10 @@ import sh.bourbon.engine.EngineConfiguration
 import sh.bourbon.engine.EngineRoute
 import sh.bourbon.gist.BuildConfig
 import sh.bourbon.gist.data.model.Configuration
+import sh.bourbon.gist.data.model.LogEvent
 import sh.bourbon.gist.data.model.Message
 import sh.bourbon.gist.data.model.UserMessages
+import sh.bourbon.gist.data.repository.GistAnalyticsService
 import sh.bourbon.gist.data.repository.GistQueueService
 import sh.bourbon.gist.data.repository.GistService
 import java.util.*
@@ -39,6 +41,11 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
     private const val POLL_INTERVAL = 10_000L
 
     private const val ACTION_CLOSE = "gist://close"
+
+    private const val ANALYTICS_EVENT_LOADED = "gist_loaded"
+    private const val ANALYTICS_EVENT_ACTION = "gist_action"
+    private const val ANALYTICS_EVENT_SYSTEM_ACTION = "gist_system_action"
+    private const val ANALYTICS_EVENT_DISMISSED = "gist_dismissed"
 
     private val tag by lazy { this::class.java.simpleName }
 
@@ -59,6 +66,25 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
             .client(httpClient)
             .build()
             .create(GistService::class.java)
+    }
+
+    private val gistAnalyticsService by lazy {
+        val httpClient = OkHttpClient.Builder()
+            .addInterceptor { chain ->
+                val request: Request = chain.request().newBuilder()
+                    .addHeader(ORGANIZATION_ID_HEADER, organizationId)
+                    .build()
+
+                chain.proceed(request)
+            }
+            .build()
+
+        Retrofit.Builder()
+            .baseUrl(BuildConfig.GIST_ANALYTICS_API_URL)
+            .addConverterFactory(GsonConverterFactory.create())
+            .client(httpClient)
+            .build()
+            .create(GistAnalyticsService::class.java)
     }
 
     private val gistQueueService by lazy {
@@ -296,6 +322,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
                     )
 
                     setListener(object : BourbonEngineListener {
+                        var instanceId = UUID.randomUUID().toString()
                         var isInitialLoad = true
                         var currentRoute = ""
                         override fun onBootstrapped() {
@@ -331,12 +358,56 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
                                     pendingMessage = message
                                 }
                             }
+
+                            GlobalScope.launch {
+                                gistAnalyticsService.logOrganizationEvent(
+                                    LogEvent(
+                                        ANALYTICS_EVENT_LOADED,
+                                        route,
+                                        instanceId,
+                                        message.queueId
+                                    )
+                                )
+                            }
                         }
 
                         override fun onTap(action: String, system: Boolean) {
                             Log.d(tag, "Engine user tapped action: $action")
                             if (action == ACTION_CLOSE || system) {
-                                handleEngineRouteClosed(message);
+                                if (system) {
+                                    GlobalScope.launch {
+                                        gistAnalyticsService.logOrganizationEvent(
+                                            LogEvent(
+                                                ANALYTICS_EVENT_SYSTEM_ACTION,
+                                                currentRoute,
+                                                instanceId,
+                                                message.queueId
+                                            )
+                                        )
+                                    }
+                                }
+                                handleEngineRouteClosed(message)
+                                GlobalScope.launch {
+                                    gistAnalyticsService.logOrganizationEvent(
+                                        LogEvent(
+                                            ANALYTICS_EVENT_DISMISSED,
+                                            currentRoute,
+                                            instanceId,
+                                            message.queueId
+                                        )
+                                    )
+                                }
+                            } else {
+                                GlobalScope.launch {
+                                    gistAnalyticsService.logOrganizationEvent(
+                                        LogEvent(
+                                            ANALYTICS_EVENT_ACTION,
+                                            currentRoute,
+                                            instanceId,
+                                            message.queueId
+                                        )
+                                    )
+                                }
                             }
                             handleEngineAction(currentRoute, action)
                         }
