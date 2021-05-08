@@ -10,7 +10,6 @@ import kotlinx.android.synthetic.main.activity_gist.*
 import sh.bourbon.gist.R
 import sh.bourbon.gist.data.model.Message
 
-
 class GistActivity : AppCompatActivity(), GistListener {
     companion object {
         fun newIntent(context: Context): Intent {
