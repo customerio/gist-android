@@ -16,10 +16,6 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import sh.bourbon.engine.BourbonEngine
-import sh.bourbon.engine.BourbonEngineListener
-import sh.bourbon.engine.EngineConfiguration
-import sh.bourbon.engine.EngineRoute
 import sh.bourbon.gist.BuildConfig
 import sh.bourbon.gist.data.model.Configuration
 import sh.bourbon.gist.data.model.LogEvent
@@ -31,9 +27,6 @@ import sh.bourbon.gist.data.repository.GistService
 import java.util.*
 
 object GistSdk : Application.ActivityLifecycleCallbacks {
-
-    internal const val BOURBON_ENGINE_ID = "gistSdk"
-
     private const val ORGANIZATION_ID_HEADER = "X-Bourbon-Organization-Id"
     private const val USER_TOKEN_HEADER = "X-Gist-User-Token"
     private const val SHARED_PREFERENCES_NAME = "gist-sdk"
@@ -130,7 +123,6 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
     private var observeUserMessagesJob: Job? = null
     private var timer: Timer? = null
     private var isInitialized = false
-    private var bourbonEngine: BourbonEngine? = null
     private var currentMessage: Message? = null
     private var pendingMessage: Message? = null
     private var topics: List<String> = emptyList()
@@ -257,6 +249,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
             try {
                 val configuration = getConfiguration()
                 showMessage(configuration, message)
+                handleEngineRouteLoaded(message)
             } catch (e: Exception) {
                 Log.e(tag, "Failed to show message: ${e.message}", e)
             }
@@ -308,6 +301,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
             currentMessage = message
             val uiHandler = Handler(application.mainLooper)
             val runnable = Runnable {
+                /*
                 bourbonEngine = BourbonEngine(application, BOURBON_ENGINE_ID).apply {
                     setup(
                         EngineConfiguration(
@@ -413,6 +407,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
                         }
                     })
                 }
+                */
             }
             uiHandler.post(runnable)
         }
@@ -488,14 +483,12 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
 
     private fun handleEngineRouteClosed(message: Message) {
         currentMessage = null
-        bourbonEngine = null
         listeners.forEach { it.onMessageDismissed(message) }
     }
 
     private fun handleEngineRouteError(message: Message) {
         listeners.forEach { it.onError(message) }
         currentMessage = null
-        bourbonEngine = null
     }
 
     private fun handleEngineAction(currentRoute: String, action: String) {
