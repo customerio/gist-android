@@ -24,7 +24,7 @@ class GistActivity : AppCompatActivity(), GistListener {
 
         //engineView.setup(GistSdk.BOURBON_ENGINE_ID, true)
         //gistWeb.loadUrl("https://app.dev.gist.build/live-preview/?options=eyJvcmdhbml6YXRpb25JZCI6IjVhNmYwMWE3LTY4NDctNDU1NC04ZTcxLTM2MTBhMjdlZDIwMSIsIm1lc3NhZ2VJZCI6InZvdWNoZXItZHJhZnQiLCJlbmRwb2ludCI6Imh0dHBzOi8vYXBpLmRldi5naXN0LmJ1aWxkIiwibGl2ZVByZXZpZXciOnRydWUsInByb3BlcnRpZXMiOm51bGx9#/")
-        gistWeb.loadUrl("http://app.local.gist.build:8000/live-preview/?options=eyJvcmdhbml6YXRpb25JZCI6IjViNDk4NDMwLTY0ZTMtNGUxYS04MjVjLWVlYTFlMTk3MzUwOCIsIm1lc3NhZ2VJZCI6ImV1cm9wZWFuLWRlc3RpbmF0aW9ucyIsImluc3RhbmNlSWQiOiIwZWZjNjM4Yi1jZDkwLTQzN2ItYTY3Mi05OTg4NTEzNzZlNTQiLCJlbmRwb2ludCI6Imh0dHA6Ly9hcGkubG9jYWwuZ2lzdC5idWlsZDo4MyIsImxpdmVQcmV2aWV3IjpmYWxzZX0=")
+        gistWeb.loadUrl("https://code.gist.build/renderer/0.0.3/index.html?options=eyJvcmdhbml6YXRpb25JZCI6ImM2ZmY5MmI5LTU2MDctNDY1NS05MjY1LWYyNTg4ZjdlM2I1OCIsIm1lc3NhZ2VJZCI6InZlcnNpb24tMi0wLWRyYWZ0IiwiZW5kcG9pbnQiOiJodHRwczovL2FwaS5naXN0LmJ1aWxkIiwibGl2ZVByZXZpZXciOnRydWUsInByb3BlcnRpZXMiOm51bGx9")
         gistWeb.settings.javaScriptEnabled = true
         gistWeb.settings.allowFileAccess = true
         gistWeb.settings.allowContentAccess = true
