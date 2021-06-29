@@ -7,11 +7,14 @@ import android.graphics.Color
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.animation.doOnEnd
-import kotlinx.android.synthetic.main.activity_gist.*
 import sh.bourbon.gist.R
 import sh.bourbon.gist.data.model.Message
+import sh.bourbon.gist.databinding.ActivityGistBinding
 
 class GistActivity : AppCompatActivity(), GistListener {
+
+    private lateinit var binding: ActivityGistBinding
+
     companion object {
         fun newIntent(context: Context): Intent {
             return Intent(context, GistActivity::class.java)
@@ -20,20 +23,22 @@ class GistActivity : AppCompatActivity(), GistListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_gist)
+        binding = ActivityGistBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         //engineView.setup(GistSdk.BOURBON_ENGINE_ID, true)
         //gistWeb.loadUrl("https://app.dev.gist.build/live-preview/?options=eyJvcmdhbml6YXRpb25JZCI6IjVhNmYwMWE3LTY4NDctNDU1NC04ZTcxLTM2MTBhMjdlZDIwMSIsIm1lc3NhZ2VJZCI6InZvdWNoZXItZHJhZnQiLCJlbmRwb2ludCI6Imh0dHBzOi8vYXBpLmRldi5naXN0LmJ1aWxkIiwibGl2ZVByZXZpZXciOnRydWUsInByb3BlcnRpZXMiOm51bGx9#/")
-        gistWeb.loadUrl("https://code.gist.build/renderer/0.0.3/index.html?options=eyJvcmdhbml6YXRpb25JZCI6ImM2ZmY5MmI5LTU2MDctNDY1NS05MjY1LWYyNTg4ZjdlM2I1OCIsIm1lc3NhZ2VJZCI6InZlcnNpb24tMi0wLWRyYWZ0IiwiZW5kcG9pbnQiOiJodHRwczovL2FwaS5naXN0LmJ1aWxkIiwibGl2ZVByZXZpZXciOnRydWUsInByb3BlcnRpZXMiOm51bGx9")
-        gistWeb.settings.javaScriptEnabled = true
-        gistWeb.settings.allowFileAccess = true
-        gistWeb.settings.allowContentAccess = true
-        gistWeb.settings.domStorageEnabled = true
-        gistWeb.setBackgroundColor(Color.TRANSPARENT)
+        binding.gistWeb.loadUrl("https://code.gist.build/renderer/0.0.3/index.html?options=eyJvcmdhbml6YXRpb25JZCI6ImM2ZmY5MmI5LTU2MDctNDY1NS05MjY1LWYyNTg4ZjdlM2I1OCIsIm1lc3NhZ2VJZCI6InZlcnNpb24tMi0wLWRyYWZ0IiwiZW5kcG9pbnQiOiJodHRwczovL2FwaS5naXN0LmJ1aWxkIiwibGl2ZVByZXZpZXciOnRydWUsInByb3BlcnRpZXMiOm51bGx9")
+        binding.gistWeb.settings.javaScriptEnabled = true
+        binding.gistWeb.settings.allowFileAccess = true
+        binding.gistWeb.settings.allowContentAccess = true
+        binding.gistWeb.settings.domStorageEnabled = true
+        binding.gistWeb.setBackgroundColor(Color.TRANSPARENT)
+        binding.gistWeb.evaluateJavascript("window.parent.postMessage = function(message) {webkit.messageHandlers.gist.postMessage(message)}", null);
 
         val animation = AnimatorInflater.loadAnimator(this, R.animator.animate_in);
         animation.startDelay = 1000 // Delay animation to avoid TextureView jitter
-        animation.setTarget(gistView)
+        animation.setTarget(binding.gistView)
         animation.start()
     }
 
@@ -52,7 +57,7 @@ class GistActivity : AppCompatActivity(), GistListener {
 
     override fun finish() {
         val animation = AnimatorInflater.loadAnimator(this, R.animator.animate_out)
-        animation.setTarget(gistView)
+        animation.setTarget(binding.gistView)
         animation.start()
         animation.doOnEnd {
             super.finish()

@@ -18,7 +18,6 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import sh.bourbon.gist.BuildConfig
 import sh.bourbon.gist.data.model.Configuration
-import sh.bourbon.gist.data.model.LogEvent
 import sh.bourbon.gist.data.model.Message
 import sh.bourbon.gist.data.model.UserMessages
 import sh.bourbon.gist.data.repository.GistAnalyticsService
@@ -83,14 +82,14 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
     private val gistQueueService by lazy {
         val httpClient: OkHttpClient = OkHttpClient.Builder()
             .addInterceptor { chain ->
-                if (getUserToken() != null) {
+                getUserToken()?.let { userToken ->
                     val request: Request = chain.request().newBuilder()
                         .addHeader(ORGANIZATION_ID_HEADER, organizationId)
-                        .addHeader(USER_TOKEN_HEADER, getUserToken())
+                        .addHeader(USER_TOKEN_HEADER, userToken)
                         .build()
 
                     chain.proceed(request)
-                } else {
+                } ?: run {
                     val request: Request = chain.request().newBuilder()
                         .addHeader(ORGANIZATION_ID_HEADER, organizationId)
                         .build()

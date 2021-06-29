@@ -7,16 +7,20 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import sh.bourbon.gist.presentation.GistListener
 import sh.bourbon.gist.presentation.GistSdk
-import kotlinx.android.synthetic.main.activity_main.*
 import sh.bourbon.gist.data.model.Message
+import sh.bourbon.gist_example.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
+
+    private lateinit var binding: ActivityMainBinding
 
     private val tag by lazy { this::class.java.simpleName }
     private val gistSdk by lazy { GistSdk.getInstance() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         if (intent?.action == Intent.ACTION_VIEW) {
             Log.d(tag, "View Intent: ${intent.dataString}")
@@ -50,7 +54,7 @@ class MainActivity : AppCompatActivity() {
         mainRouteProperties["title"] = "Top Artists"
         mainRouteProperties["list"] = ArtistsMock.data()
 
-        launchButton.setOnClickListener {
+        binding.launchButton.setOnClickListener {
             val message = Message(messageId = "artists", properties = mainRouteProperties)
             gistSdk.showMessage(message)
         }
