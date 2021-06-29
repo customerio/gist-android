@@ -26,8 +26,6 @@ class MainActivity : AppCompatActivity() {
             Log.d(tag, "View Intent: ${intent.dataString}")
         }
 
-        setContentView(R.layout.activity_main)
-
         gistSdk.addListener(object : GistListener {
             override fun onMessageShown(message: Message) {
                 Log.d(tag, "Message Shown")

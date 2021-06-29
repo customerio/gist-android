@@ -118,7 +118,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
 
     private var resumedActivities = mutableSetOf<String>()
 
-    public var configuration: Configuration? = null
+    private var configuration: Configuration? = null
     private var observeUserMessagesJob: Job? = null
     private var timer: Timer? = null
     private var isInitialized = false
