@@ -56,7 +56,7 @@ dependencies {
 
 ext {
     libraryName = 'gist'
-    groupId = 'sh.bourbon'
+    groupId = 'build'
     artifactId = 'gist'
 }
 

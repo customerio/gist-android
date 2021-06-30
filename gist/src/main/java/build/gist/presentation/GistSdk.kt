@@ -1,4 +1,4 @@
-package sh.bourbon.gist.presentation
+package build.gist.presentation
 
 import android.app.Activity
 import android.app.Application
@@ -16,13 +16,13 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import sh.bourbon.gist.BuildConfig
-import sh.bourbon.gist.data.model.Configuration
-import sh.bourbon.gist.data.model.Message
-import sh.bourbon.gist.data.model.UserMessages
-import sh.bourbon.gist.data.repository.GistAnalyticsService
-import sh.bourbon.gist.data.repository.GistQueueService
-import sh.bourbon.gist.data.repository.GistService
+import build.gist.BuildConfig
+import build.gist.data.model.Configuration
+import build.gist.data.model.Message
+import build.gist.data.model.UserMessages
+import build.gist.data.repository.GistAnalyticsService
+import build.gist.data.repository.GistQueueService
+import build.gist.data.repository.GistService
 import java.util.*
 
 object GistSdk : Application.ActivityLifecycleCallbacks {

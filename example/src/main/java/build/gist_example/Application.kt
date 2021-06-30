@@ -1,7 +1,7 @@
-package sh.bourbon.gist_example
+package build.gist_example
 
 import android.app.Application
-import sh.bourbon.gist.presentation.GistSdk
+import build.gist.presentation.GistSdk
 
 class Application : Application() {
 

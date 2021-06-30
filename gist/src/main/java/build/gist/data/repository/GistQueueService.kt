@@ -1,11 +1,11 @@
-package sh.bourbon.gist.data.repository
+package build.gist.data.repository
 
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.POST
 import retrofit2.http.Path
-import sh.bourbon.gist.data.model.Message
-import sh.bourbon.gist.data.model.UserMessages
+import build.gist.data.model.Message
+import build.gist.data.model.UserMessages
 
 interface GistQueueService {
     @POST("/api/v1/users")

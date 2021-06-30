@@ -1,14 +1,14 @@
-package sh.bourbon.gist_example
+package build.gist_example
 
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import sh.bourbon.gist.presentation.GistListener
-import sh.bourbon.gist.presentation.GistSdk
-import sh.bourbon.gist.data.model.Message
-import sh.bourbon.gist_example.databinding.ActivityMainBinding
+import build.gist.presentation.GistListener
+import build.gist.presentation.GistSdk
+import build.gist.data.model.Message
+import build.gist_example.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
 
