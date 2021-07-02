@@ -43,6 +43,9 @@ internal class EngineWebView @JvmOverloads constructor(
                 override fun onPageFinished(view: WebView, url: String?) {
                     view.loadUrl("javascript:window.parent.postMessage = function(message) {window.appInterface.postMessage(JSON.stringify(message))}")
                 }
+                override fun shouldOverrideUrlLoading(view: WebView, url: String): Boolean {
+                    return true
+                }
             }
         }?: run {
             listener?.error()

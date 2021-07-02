@@ -3,9 +3,7 @@ package build.gist.presentation
 import android.app.Activity
 import android.app.Application
 import android.content.Context.MODE_PRIVATE
-import android.content.Intent
 import android.os.Bundle
-import android.os.Handler
 import android.util.Log
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.GlobalScope
@@ -17,61 +15,35 @@ import okhttp3.Request
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import build.gist.BuildConfig
+import build.gist.data.NetworkUtilities
+import build.gist.data.events.Analytics
 import build.gist.data.model.Message
 import build.gist.data.model.UserMessages
-import build.gist.data.repository.GistAnalyticsService
 import build.gist.data.repository.GistQueueService
-import com.google.gson.Gson
 import java.util.*
 
 const val GIST_TAG: String = "Gist"
 
 object GistSdk : Application.ActivityLifecycleCallbacks {
-    private const val ORGANIZATION_ID_HEADER = "X-Bourbon-Organization-Id"
-    private const val USER_TOKEN_HEADER = "X-Gist-User-Token"
     private const val SHARED_PREFERENCES_NAME = "gist-sdk"
     private const val SHARED_PREFERENCES_USER_TOKEN_KEY = "userToken"
     private const val POLL_INTERVAL = 10_000L
 
     private const val ACTION_CLOSE = "gist://close"
 
-    private const val ANALYTICS_EVENT_LOADED = "gist_loaded"
-    private const val ANALYTICS_EVENT_ACTION = "gist_action"
-    private const val ANALYTICS_EVENT_SYSTEM_ACTION = "gist_system_action"
-    private const val ANALYTICS_EVENT_DISMISSED = "gist_dismissed"
-
-    private val gistAnalyticsService by lazy {
-        val httpClient = OkHttpClient.Builder()
-            .addInterceptor { chain ->
-                val request: Request = chain.request().newBuilder()
-                    .addHeader(ORGANIZATION_ID_HEADER, organizationId)
-                    .build()
-
-                chain.proceed(request)
-            }
-            .build()
-
-        Retrofit.Builder()
-            .baseUrl(BuildConfig.GIST_ANALYTICS_API_URL)
-            .addConverterFactory(GsonConverterFactory.create())
-            .client(httpClient)
-            .build()
-            .create(GistAnalyticsService::class.java)
-    }
-
     private val gistQueueService by lazy {
         val httpClient: OkHttpClient = OkHttpClient.Builder()
             .addInterceptor { chain ->
                 getUserToken()?.let { userToken ->
                     val request: Request = chain.request().newBuilder()
-                        .addHeader(ORGANIZATION_ID_HEADER, organizationId)
-                        .addHeader(USER_TOKEN_HEADER, userToken)
+                        .addHeader(NetworkUtilities.ORGANIZATION_ID_HEADER, organizationId)
+                        .addHeader(NetworkUtilities.USER_TOKEN_HEADER, userToken)
                         .build()
 
                     chain.proceed(request)
                 } ?: run {
                     val request: Request = chain.request().newBuilder()
-                        .addHeader(ORGANIZATION_ID_HEADER, organizationId)
+                        .addHeader(NetworkUtilities.ORGANIZATION_ID_HEADER, organizationId)
                         .build()
 
                     chain.proceed(request)
@@ -104,6 +76,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
     private var topics: List<String> = emptyList()
 
     private var gistModalManager: GistModalManager = GistModalManager()
+    internal var gistAnalytics: Analytics = Analytics()
 
     @JvmStatic
     fun getInstance() = this
@@ -153,9 +126,6 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
                 // Observe user messages if user token is set
                 if (getUserToken() != null) {
                     observeMessagesForUser()
-                } else {
-                    // Pre-fetch configuration
-                    //getConfiguration()
                 }
             } catch (e: Exception) {
                 Log.e(GIST_TAG, e.message, e)
@@ -210,20 +180,21 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         }
     }
 
-    fun showMessage(message: Message) {
+    fun showMessage(message: Message): String {
         ensureInitialized()
 
         GlobalScope.launch {
             try {
-                //val configuration = getConfiguration()
                 gistModalManager.showModalMessage(message)
             } catch (e: Exception) {
                 Log.e(GIST_TAG, "Failed to show message: ${e.message}", e)
             }
         }
+        return message.instanceId
     }
 
-    fun dismissMessage() {
+    fun dismissMessage(instanceId: String) {
+        //handleGistClosed(message = )
         //currentMessage?.let { currentMessage -> handleEngineRouteClosed(currentMessage) }
     }
 
