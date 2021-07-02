@@ -7,16 +7,21 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.animation.doOnEnd
 import build.gist.R
+import build.gist.data.model.GistMessageProperties
 import build.gist.data.model.Message
 import build.gist.databinding.ActivityGistBinding
+import build.gist.presentation.engine.EngineWebMessage
+import com.google.gson.Gson
 
-class GistActivity : AppCompatActivity(), GistListener {
+const val GIST_MESSAGE_INTENT: String = "GIST_MESSAGE"
 
+class GistModalActivity : AppCompatActivity(), GistListener {
     private lateinit var binding: ActivityGistBinding
+    private var currentMessage: Message? = null
 
     companion object {
         fun newIntent(context: Context): Intent {
-            return Intent(context, GistActivity::class.java)
+            return Intent(context, GistModalActivity::class.java)
         }
     }
 
@@ -24,12 +29,26 @@ class GistActivity : AppCompatActivity(), GistListener {
         super.onCreate(savedInstanceState)
         binding = ActivityGistBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
-        val animation = AnimatorInflater.loadAnimator(this, R.animator.animate_in)
-        animation.startDelay = 1000 // Delay animation to avoid TextureView jitter
-        animation.setTarget(binding.modalGistView)
-        animation.start()
+        val messageStr = this.intent.getStringExtra(GIST_MESSAGE_INTENT)
+        Gson().fromJson(messageStr, Message::class.java)?.let { messageObj ->
+            currentMessage = messageObj
+            currentMessage?.let { message ->
+                binding.gistView.setup(message)
+                val animation = AnimatorInflater.loadAnimator(this, R.animator.animate_in)
+                animation.setTarget(binding.modalGistView)
+                animation.start()
+            }
+        } ?: run {
+            finish()
+        }
     }
+
+    /*
+        var params = this.layoutParams
+        params.height = height.toInt()
+        params.width = width.toInt()
+        this.layoutParams = params
+     */
 
     override fun onResume() {
         super.onResume()
@@ -50,6 +69,9 @@ class GistActivity : AppCompatActivity(), GistListener {
         animation.start()
         animation.doOnEnd {
             super.finish()
+            currentMessage?.let { message ->
+                GistSdk.handleGistClosed(message);
+            }
         }
     }
 
@@ -57,6 +79,7 @@ class GistActivity : AppCompatActivity(), GistListener {
     }
 
     override fun onMessageDismissed(message: Message) {
+        GistSdk.dismissMessage()
         // Message was cancelled, close activity
         finish()
     }

@@ -8,13 +8,13 @@ import androidx.appcompat.app.AppCompatActivity
 import build.gist.presentation.GistListener
 import build.gist.presentation.GistSdk
 import build.gist.data.model.Message
+import build.gist.presentation.GIST_TAG
 import build.gist_example.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
 
-    private val tag by lazy { this::class.java.simpleName }
     private val gistSdk by lazy { GistSdk.getInstance() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -23,16 +23,16 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         if (intent?.action == Intent.ACTION_VIEW) {
-            Log.d(tag, "View Intent: ${intent.dataString}")
+            Log.d(GIST_TAG, "View Intent: ${intent.dataString}")
         }
 
         gistSdk.addListener(object : GistListener {
             override fun onMessageShown(message: Message) {
-                Log.d(tag, "Message Shown")
+                Log.d(GIST_TAG, "Message Shown")
             }
 
             override fun onMessageDismissed(message: Message) {
-                Log.d(tag, "Message Dismissed")
+                Log.d(GIST_TAG, "Message Dismissed")
             }
 
             override fun onAction(currentRoute: String, action: String) {
@@ -44,7 +44,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onError(message: Message) {
-                Log.d(tag, "Message Error")
+                Log.d(GIST_TAG, "Message Error")
             }
         })
 

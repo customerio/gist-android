@@ -17,13 +17,14 @@ import okhttp3.Request
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import build.gist.BuildConfig
-import build.gist.data.model.Configuration
 import build.gist.data.model.Message
 import build.gist.data.model.UserMessages
 import build.gist.data.repository.GistAnalyticsService
 import build.gist.data.repository.GistQueueService
-import build.gist.data.repository.GistService
+import com.google.gson.Gson
 import java.util.*
+
+const val GIST_TAG: String = "Gist"
 
 object GistSdk : Application.ActivityLifecycleCallbacks {
     private const val ORGANIZATION_ID_HEADER = "X-Bourbon-Organization-Id"
@@ -38,27 +39,6 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
     private const val ANALYTICS_EVENT_ACTION = "gist_action"
     private const val ANALYTICS_EVENT_SYSTEM_ACTION = "gist_system_action"
     private const val ANALYTICS_EVENT_DISMISSED = "gist_dismissed"
-
-    private val tag by lazy { this::class.java.simpleName }
-
-    private val gistService by lazy {
-        val httpClient = OkHttpClient.Builder()
-            .addInterceptor { chain ->
-                val request: Request = chain.request().newBuilder()
-                    .addHeader(ORGANIZATION_ID_HEADER, organizationId)
-                    .build()
-
-                chain.proceed(request)
-            }
-            .build()
-
-        Retrofit.Builder()
-            .baseUrl(BuildConfig.GIST_API_URL)
-            .addConverterFactory(GsonConverterFactory.create())
-            .client(httpClient)
-            .build()
-            .create(GistService::class.java)
-    }
 
     private val gistAnalyticsService by lazy {
         val httpClient = OkHttpClient.Builder()
@@ -111,20 +91,19 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         application.getSharedPreferences(SHARED_PREFERENCES_NAME, MODE_PRIVATE)
     }
 
-    private lateinit var organizationId: String
-    private lateinit var application: Application
+    lateinit var organizationId: String
+    internal lateinit var application: Application
 
     private val listeners: MutableList<GistListener> = mutableListOf()
 
     private var resumedActivities = mutableSetOf<String>()
 
-    private var configuration: Configuration? = null
     private var observeUserMessagesJob: Job? = null
     private var timer: Timer? = null
     private var isInitialized = false
-    private var currentMessage: Message? = null
-    private var pendingMessage: Message? = null
     private var topics: List<String> = emptyList()
+
+    private var gistModalManager: GistModalManager = GistModalManager()
 
     @JvmStatic
     fun getInstance() = this
@@ -142,12 +121,6 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         if (isAppResumed() && getUserToken() != null && isNotObservingMessages) {
             observeMessagesForUser()
         }
-
-        // Show any pending messages
-        pendingMessage?.let { message ->
-            pendingMessage = null
-            handleEngineRouteLoaded(message)
-        }
     }
 
     override fun onActivityPaused(activity: Activity) {
@@ -164,11 +137,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
 
     override fun onActivityStopped(activity: Activity) {}
 
-    override fun onActivityDestroyed(activity: Activity) {
-        if (activity is GistActivity) {
-            currentMessage?.let { currentMessage -> handleEngineRouteClosed(currentMessage) }
-        }
-    }
+    override fun onActivityDestroyed(activity: Activity) {}
 
     override fun onActivitySaveInstanceState(activity: Activity, p1: Bundle) {}
 
@@ -186,10 +155,10 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
                     observeMessagesForUser()
                 } else {
                     // Pre-fetch configuration
-                    getConfiguration()
+                    //getConfiguration()
                 }
             } catch (e: Exception) {
-                Log.e(tag, e.message, e)
+                Log.e(GIST_TAG, e.message, e)
             }
         }
     }
@@ -228,7 +197,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         ensureInitialized()
 
         if (!getUserToken().equals(userToken)) {
-            Log.d(tag, "Setting user token to: $userToken")
+            Log.d(GIST_TAG, "Setting user token to: $userToken")
             // Save user token in preferences to be fetched on the next launch
             sharedPreferences.edit().putString(SHARED_PREFERENCES_USER_TOKEN_KEY, userToken).apply()
 
@@ -236,7 +205,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
             try {
                 observeMessagesForUser()
             } catch (e: Exception) {
-                Log.e(tag, "Failed to observe messages for user: ${e.message}", e)
+                Log.e(GIST_TAG, "Failed to observe messages for user: ${e.message}", e)
             }
         }
     }
@@ -246,17 +215,16 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
 
         GlobalScope.launch {
             try {
-                val configuration = getConfiguration()
-                showMessage(configuration, message)
-                handleEngineRouteLoaded(message)
+                //val configuration = getConfiguration()
+                gistModalManager.showModalMessage(message)
             } catch (e: Exception) {
-                Log.e(tag, "Failed to show message: ${e.message}", e)
+                Log.e(GIST_TAG, "Failed to show message: ${e.message}", e)
             }
         }
     }
 
     fun dismissMessage() {
-        currentMessage?.let { currentMessage -> handleEngineRouteClosed(currentMessage) }
+        //currentMessage?.let { currentMessage -> handleEngineRouteClosed(currentMessage) }
     }
 
     fun addListener(listener: GistListener) {
@@ -277,164 +245,15 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         GlobalScope.launch {
             try {
                 if (message.queueId != null) {
-                    Log.d(tag, "Logging view for user message: ${message.messageId}, with queue id: ${message.queueId}")
+                    Log.d(GIST_TAG, "Logging view for user message: ${message.messageId}, with queue id: ${message.queueId}")
                     gistQueueService.logUserMessageView(message.queueId)
                 } else {
-                    Log.d(tag, "Logging view for message: ${message.messageId}")
+                    Log.d(GIST_TAG, "Logging view for message: ${message.messageId}")
                     gistQueueService.logMessageView(message.messageId)
                 }
             } catch (e: Exception) {
-                Log.e(tag, "Failed to log message view: ${e.message}", e)
+                Log.e(GIST_TAG, "Failed to log message view: ${e.message}", e)
             }
-        }
-    }
-
-    private fun showMessage(configuration: Configuration, message: Message) {
-        with(configuration) {
-            if (!canShowMessage() || currentMessage != null) {
-                Log.d(tag, "Message ${message.messageId} not shown, activity is already showing.")
-                return
-            }
-
-            Log.d(tag, "Showing message: ${message.messageId}")
-            currentMessage = message
-            val uiHandler = Handler(application.mainLooper)
-            val runnable = Runnable {
-                /*
-                bourbonEngine = BourbonEngine(application, BOURBON_ENGINE_ID).apply {
-                    setup(
-                        EngineConfiguration(
-                            organizationId = organizationId,
-                            projectId = projectId,
-                            engineEndpoint = engineEndpoint,
-                            authenticationEndpoint = identityEndpoint,
-                            engineVersion = 1.0,
-                            configurationVersion = 1.0,
-                            engineRoute = EngineRoute(message.messageId, message.properties)
-                        )
-                    )
-
-                    setListener(object : BourbonEngineListener {
-                        var instanceId = UUID.randomUUID().toString()
-                        var isInitialLoad = true
-                        var currentRoute = ""
-                        override fun onBootstrapped() {
-                            Log.d(tag, "Engine bootstrapped")
-                        }
-
-                        override fun onRouteChanged(newRoute: String) {
-                            Log.d(tag, "Engine route changed ${newRoute}")
-                        }
-
-                        override fun onRouteError(route: String) {
-                            Log.d(tag, "Engine route error ${route}")
-                            handleEngineRouteError(message)
-                        }
-
-                        override fun onError() {
-                            Log.d(tag, "Engine error on message: ${message.messageId}")
-                            handleEngineRouteError(message)
-                        }
-
-                        override fun onRouteLoaded(route: String) {
-                            Log.d(tag, "Engine route loaded: $route")
-                            currentRoute = route
-                            if (isInitialLoad) {
-                                isInitialLoad = false
-                                val isAppStillRunning = resumedActivities.isNotEmpty()
-                                if (isAppStillRunning) {
-                                    handleEngineRouteLoaded(message)
-                                } else {
-                                    // App was paused between the request and the time the engine was loaded.
-                                    // Since the activity cannot be shown in this state, set the message id as
-                                    // pending and show it when the app is resumed.
-                                    pendingMessage = message
-                                }
-                            }
-
-                            GlobalScope.launch {
-                                gistAnalyticsService.logOrganizationEvent(
-                                    LogEvent(
-                                        ANALYTICS_EVENT_LOADED,
-                                        route,
-                                        instanceId,
-                                        message.queueId
-                                    )
-                                )
-                            }
-                        }
-
-                        override fun onTap(action: String, system: Boolean) {
-                            Log.d(tag, "Engine user tapped action: $action")
-                            if (action == ACTION_CLOSE || system) {
-                                if (system) {
-                                    GlobalScope.launch {
-                                        gistAnalyticsService.logOrganizationEvent(
-                                            LogEvent(
-                                                ANALYTICS_EVENT_SYSTEM_ACTION,
-                                                currentRoute,
-                                                instanceId,
-                                                message.queueId
-                                            )
-                                        )
-                                    }
-                                }
-                                handleEngineRouteClosed(message)
-                                GlobalScope.launch {
-                                    gistAnalyticsService.logOrganizationEvent(
-                                        LogEvent(
-                                            ANALYTICS_EVENT_DISMISSED,
-                                            currentRoute,
-                                            instanceId,
-                                            message.queueId
-                                        )
-                                    )
-                                }
-                            } else {
-                                GlobalScope.launch {
-                                    gistAnalyticsService.logOrganizationEvent(
-                                        LogEvent(
-                                            ANALYTICS_EVENT_ACTION,
-                                            currentRoute,
-                                            instanceId,
-                                            message.queueId
-                                        )
-                                    )
-                                }
-                            }
-                            handleEngineAction(currentRoute, action)
-                        }
-                    })
-                }
-                */
-            }
-            uiHandler.post(runnable)
-        }
-    }
-
-    private fun showMessageActivity() {
-        Log.d(tag, "Showing message activity")
-        val intent = GistActivity.newIntent(application)
-        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        application.startActivity(intent)
-    }
-
-    private suspend fun getConfiguration(): Configuration {
-        val existingConfiguration = configuration
-        if (existingConfiguration != null) return existingConfiguration
-
-        // Configuration does not exist, fetch it from service and persist globally
-        try {
-            Log.d(tag, "Fetching configuration")
-            val configuration = gistService.fetchConfiguration()
-            this.configuration = configuration
-            return configuration
-        } catch (e: CancellationException) {
-            // Co-routine was cancelled
-            Log.d(tag, "Fetch configuration cancelled")
-            throw e
-        } catch (e: Exception) {
-            throw Exception("Failed to fetch configuration: ${e.message}", e)
         }
     }
 
@@ -443,54 +262,48 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         observeUserMessagesJob?.cancel()
         timer = null
 
-        Log.d(tag, "Messages timer started")
+        Log.d(GIST_TAG, "Messages timer started")
         observeUserMessagesJob = GlobalScope.launch {
             try {
-                val configuration = getConfiguration()
-
                 // Poll for user messages
                 val ticker = ticker(POLL_INTERVAL, context = this.coroutineContext)
                 for (tick in ticker) {
-                    Log.d(tag, "Fetching user messages")
+                    Log.d(GIST_TAG, "Fetching user messages")
                     val latestMessagesResponse = gistQueueService.fetchMessagesForUser(UserMessages(getTopics()))
                     if (latestMessagesResponse.code() == 204) {
                         // No content, don't do anything
-                        Log.d(tag, "No messages found for user")
+                        Log.d(GIST_TAG, "No messages found for user")
                         continue
                     } else if (latestMessagesResponse.isSuccessful) {
-                        Log.d(tag, "Found ${latestMessagesResponse.body()?.count()} messages for user")
-                        latestMessagesResponse.body()?.last()?.let {
-                            showMessage(configuration, it)
+                        Log.d(GIST_TAG, "Found ${latestMessagesResponse.body()?.count()} messages for user")
+                        latestMessagesResponse.body()?.last()?.let { message ->
+                            showMessage(message)
                         }
                     }
                 }
             } catch (e: CancellationException) {
                 // Co-routine was cancelled, cancel internal timer
-                Log.d(tag, "Messages timer cancelled")
+                Log.d(GIST_TAG, "Messages timer cancelled")
                 timer?.cancel()
             } catch (e: Exception) {
-                Log.e(tag, "Failed to get user messages: ${e.message}", e)
+                Log.e(GIST_TAG, "Failed to get user messages: ${e.message}", e)
             }
         }
     }
 
-    private fun handleEngineRouteLoaded(message: Message) {
-        showMessageActivity()
-        logView(message)
+    internal fun handleGistLoaded(message: Message) {
         listeners.forEach { it.onMessageShown(message) }
     }
 
-    private fun handleEngineRouteClosed(message: Message) {
-        currentMessage = null
+    internal fun handleGistClosed(message: Message) {
         listeners.forEach { it.onMessageDismissed(message) }
     }
 
-    private fun handleEngineRouteError(message: Message) {
+    internal fun handleGistError(message: Message) {
         listeners.forEach { it.onError(message) }
-        currentMessage = null
     }
 
-    private fun handleEngineAction(currentRoute: String, action: String) {
+    internal fun handleGistAction(currentRoute: String, action: String) {
         listeners.forEach { it.onAction(currentRoute, action) }
     }
 
@@ -502,13 +315,15 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         if (!isInitialized) throw IllegalStateException("GistSdk must be initialized by calling GistSdk.init()")
     }
 
+    private fun isAppResumed() = resumedActivities.isNotEmpty()
+
+    /*
     private fun canShowMessage(): Boolean {
         return isAppResumed() && !isGistActivityResumed()
     }
 
-    private fun isAppResumed() = resumedActivities.isNotEmpty()
-
-    private fun isGistActivityResumed() = resumedActivities.contains(GistActivity::class.java.name)
+    private fun isGistActivityResumed() = resumedActivities.contains(GistModalActivity::class.java.name)
+     */
 }
 
 interface GistListener {

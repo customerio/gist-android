@@ -4,7 +4,7 @@
 
     <application>
         <activity
-            android:name="build.gist.presentation.GistActivity"
+            android:name="build.gist.presentation.GistModalActivity"
             android:theme="@style/GistActivityTheme" />
     </application>
 
