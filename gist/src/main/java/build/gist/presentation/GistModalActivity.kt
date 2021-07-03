@@ -4,7 +4,6 @@ import android.animation.AnimatorInflater
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.util.DisplayMetrics
 import android.util.Log
 import android.view.Gravity
 import androidx.appcompat.app.AppCompatActivity
@@ -90,11 +89,11 @@ class GistModalActivity : AppCompatActivity(), GistListener, GistViewListener {
         }
     }
 
-    override fun onGistViewSizeChanged(width: Double, height: Double) {
+    override fun onGistViewSizeChanged(width: Int, height: Int) {
         Log.i(GIST_TAG, "Message Size Changed")
         val params = binding.gistView.layoutParams
-        params.height = getDPI(height.toInt())
-        params.width = getDPI(width.toInt())
+        params.height = height
+        params.width = width
         runOnUiThread {
             binding.modalGistViewLayout.updateViewLayout(binding.gistView, params)
         }
@@ -105,8 +104,4 @@ class GistModalActivity : AppCompatActivity(), GistListener, GistViewListener {
     }
 
     override fun onAction(currentRoute: String, action: String) {}
-
-    private fun getDPI(size: Int): Int {
-        return size * this.baseContext.resources.displayMetrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT
-    }
 }

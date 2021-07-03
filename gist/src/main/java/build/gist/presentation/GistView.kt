@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.util.AttributeSet
+import android.util.DisplayMetrics
 import android.util.Log
 import android.widget.FrameLayout
 import androidx.core.content.ContextCompat.startActivity
@@ -104,10 +105,14 @@ class GistView @JvmOverloads constructor(
     override fun bootstrapped() {}
     override fun routeChanged(newRoute: String) {}
     override fun sizeChanged(width: Double, height: Double) {
-        listener?.onGistViewSizeChanged(width, height)
+        listener?.onGistViewSizeChanged(getSizeBasedOnDPI(width.toInt()), getSizeBasedOnDPI(height.toInt()))
+    }
+
+    private fun getSizeBasedOnDPI(size: Int): Int {
+        return size * context.resources.displayMetrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT
     }
 }
 
 interface GistViewListener {
-    fun onGistViewSizeChanged(width: Double, height: Double) {}
+    fun onGistViewSizeChanged(width: Int, height: Int) {}
 }
