@@ -14,17 +14,25 @@ internal class GistModalManager: GistListener {
 
     internal fun showModalMessage(message: Message) {
         if (currentMessage != null) {
-            Log.d(GIST_TAG, "Message ${message.messageId} not shown, activity is already showing.")
+            Log.i(GIST_TAG, "Message ${message.messageId} not shown, activity is already showing.")
             return
         }
 
-        Log.d(GIST_TAG, "Showing message: ${message.messageId}")
+        Log.i(GIST_TAG, "Showing message: ${message.messageId}")
         currentMessage = message
 
         val intent = GistModalActivity.newIntent(GistSdk.application)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         intent.putExtra(GIST_MESSAGE_INTENT, Gson().toJson(message));
         GistSdk.application.startActivity(intent)
+    }
+
+    internal fun dismissActiveMessage() {
+        currentMessage?.let { message ->
+            GistSdk.handleGistClosed(message = message)
+        } ?: run {
+            Log.i(GIST_TAG, "No modal messages to dismiss.")
+        }
     }
 
     override fun onMessageDismissed(message: Message) {

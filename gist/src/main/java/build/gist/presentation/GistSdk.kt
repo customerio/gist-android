@@ -167,7 +167,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         ensureInitialized()
 
         if (!getUserToken().equals(userToken)) {
-            Log.d(GIST_TAG, "Setting user token to: $userToken")
+            Log.i(GIST_TAG, "Setting user token to: $userToken")
             // Save user token in preferences to be fetched on the next launch
             sharedPreferences.edit().putString(SHARED_PREFERENCES_USER_TOKEN_KEY, userToken).apply()
 
@@ -193,9 +193,8 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         return message.instanceId
     }
 
-    fun dismissMessage(instanceId: String) {
-        //handleGistClosed(message = )
-        //currentMessage?.let { currentMessage -> handleEngineRouteClosed(currentMessage) }
+    fun dismissMessage() {
+        gistModalManager.dismissActiveMessage()
     }
 
     fun addListener(listener: GistListener) {
@@ -216,10 +215,10 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         GlobalScope.launch {
             try {
                 if (message.queueId != null) {
-                    Log.d(GIST_TAG, "Logging view for user message: ${message.messageId}, with queue id: ${message.queueId}")
+                    Log.i(GIST_TAG, "Logging view for user message: ${message.messageId}, with queue id: ${message.queueId}")
                     gistQueueService.logUserMessageView(message.queueId)
                 } else {
-                    Log.d(GIST_TAG, "Logging view for message: ${message.messageId}")
+                    Log.i(GIST_TAG, "Logging view for message: ${message.messageId}")
                     gistQueueService.logMessageView(message.messageId)
                 }
             } catch (e: Exception) {
@@ -233,20 +232,20 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         observeUserMessagesJob?.cancel()
         timer = null
 
-        Log.d(GIST_TAG, "Messages timer started")
+        Log.i(GIST_TAG, "Messages timer started")
         observeUserMessagesJob = GlobalScope.launch {
             try {
                 // Poll for user messages
                 val ticker = ticker(POLL_INTERVAL, context = this.coroutineContext)
                 for (tick in ticker) {
-                    Log.d(GIST_TAG, "Fetching user messages")
+                    Log.i(GIST_TAG, "Fetching user messages")
                     val latestMessagesResponse = gistQueueService.fetchMessagesForUser(UserMessages(getTopics()))
                     if (latestMessagesResponse.code() == 204) {
                         // No content, don't do anything
-                        Log.d(GIST_TAG, "No messages found for user")
+                        Log.i(GIST_TAG, "No messages found for user")
                         continue
                     } else if (latestMessagesResponse.isSuccessful) {
-                        Log.d(GIST_TAG, "Found ${latestMessagesResponse.body()?.count()} messages for user")
+                        Log.i(GIST_TAG, "Found ${latestMessagesResponse.body()?.count()} messages for user")
                         latestMessagesResponse.body()?.last()?.let { message ->
                             showMessage(message)
                         }
@@ -254,7 +253,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
                 }
             } catch (e: CancellationException) {
                 // Co-routine was cancelled, cancel internal timer
-                Log.d(GIST_TAG, "Messages timer cancelled")
+                Log.i(GIST_TAG, "Messages timer cancelled")
                 timer?.cancel()
             } catch (e: Exception) {
                 Log.e(GIST_TAG, "Failed to get user messages: ${e.message}", e)
@@ -293,8 +292,8 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         return isAppResumed() && !isGistActivityResumed()
     }
 
-    private fun isGistActivityResumed() = resumedActivities.contains(GistModalActivity::class.java.name)
-     */
+    private fun isGistModalActivityActive() = resumedActivities.contains(GistModalActivity::class.java.name)
+    */
 }
 
 interface GistListener {
