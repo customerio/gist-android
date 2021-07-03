@@ -27,11 +27,11 @@ class GistMessageProperties {
             var elementId: String = ""
 
             message.properties?.let { properties ->
-                (properties["routeRule"] as String).let { rule ->
-                    routeRule = rule
+                (properties["routeRule"]).let { rule ->
+                    routeRule = rule.toString()
                 }
-                (properties["elementId"] as String).let { id ->
-                    elementId = id
+                (properties["elementId"]).let { id ->
+                    elementId = id.toString()
                 }
             }
             return GistProperties(routeRule = routeRule, elementId = elementId, MessagePosition.CENTER)
