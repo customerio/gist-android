@@ -23,18 +23,32 @@ data class Message(
 class GistMessageProperties {
     companion object {
         fun getGistProperties(message: Message): GistProperties {
-            var routeRule: String = ""
-            var elementId: String = ""
+            var routeRule: String? = null
+            var elementId: String? = null
+            var position: MessagePosition = MessagePosition.CENTER
 
             message.properties?.let { properties ->
-                (properties["routeRule"]).let { rule ->
-                    routeRule = rule.toString()
-                }
-                (properties["elementId"]).let { id ->
-                    elementId = id.toString()
+                properties["gist"]?.let { gistProperties ->
+                    (gistProperties as Map<String, Any?>).let { gistProperties ->
+                        gistProperties["routeRule"]?.let { rule ->
+                            (rule as String).let { stringRule ->
+                                routeRule = stringRule
+                            }
+                        }
+                        gistProperties["elementId"]?.let { id ->
+                            (id as String).let { stringId ->
+                                elementId = stringId
+                            }
+                        }
+                        gistProperties["position"]?.let { messagePosition ->
+                            (messagePosition as String).let { stringPosition ->
+                                position = MessagePosition.valueOf(stringPosition.uppercase())
+                            }
+                        }
+                    }
                 }
             }
-            return GistProperties(routeRule = routeRule, elementId = elementId, MessagePosition.CENTER)
+            return GistProperties(routeRule = routeRule, elementId = elementId, position = position)
         }
     }
 }

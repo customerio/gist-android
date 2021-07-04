@@ -3,6 +3,7 @@ package build.gist.data.listeners
 import android.util.Log
 import build.gist.BuildConfig
 import build.gist.data.NetworkUtilities
+import build.gist.data.model.GistMessageProperties
 import build.gist.data.model.Message
 import build.gist.data.model.UserMessages
 import build.gist.data.repository.GistQueueService
@@ -63,8 +64,18 @@ class Queue: GistListener {
                 Log.i(GIST_TAG, "No messages found for user")
             } else if (latestMessagesResponse.isSuccessful) {
                 Log.i(GIST_TAG, "Found ${latestMessagesResponse.body()?.count()} messages for user")
-                latestMessagesResponse.body()?.last()?.let { message ->
-                    GistSdk.showMessage(message)
+                latestMessagesResponse.body()?.forEach foreach@{ message ->
+                    val gistProperties = GistMessageProperties.getGistProperties(message)
+                    gistProperties.routeRule?.let { routeRule ->
+                        if (!routeRule.toRegex().matches(GistSdk.currentRoute)) {
+                            return@foreach
+                        }
+                    }
+                    gistProperties.elementId?.let { elementId ->
+                        GistSdk.handleEmbedMessage(message, elementId)
+                    } ?: run {
+                        GistSdk.showMessage(message)
+                    }
                 }
             }
         }
@@ -89,6 +100,8 @@ class Queue: GistListener {
     override fun onMessageShown(message: Message) {
         logView(message)
     }
+
+    override fun embedMessage(message: Message, elementId: String) {}
 
     override fun onMessageDismissed(message: Message) {}
 

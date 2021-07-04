@@ -103,5 +103,7 @@ class GistModalActivity : AppCompatActivity(), GistListener, GistViewListener {
         finish()
     }
 
+    override fun embedMessage(message: Message, elementId: String) {}
+
     override fun onAction(message: Message, currentRoute: String, action: String) {}
 }

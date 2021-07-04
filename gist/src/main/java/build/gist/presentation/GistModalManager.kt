@@ -48,6 +48,8 @@ internal class GistModalManager: GistListener {
         }
     }
 
+    override fun embedMessage(message: Message, elementId: String) {}
+
     override fun onMessageShown(message: Message) {}
 
     override fun onAction(message: Message, currentRoute: String, action: String) {}

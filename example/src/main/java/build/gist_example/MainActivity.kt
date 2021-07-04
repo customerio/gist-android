@@ -48,6 +48,12 @@ class MainActivity : AppCompatActivity(), GistViewListener {
             override fun onError(message: Message) {
                 Log.d(GIST_TAG, "Message Error")
             }
+
+            override fun embedMessage(message: Message, elementId: String) {
+                runOnUiThread {
+                    binding.gistView.setup(message)
+                }
+            }
         })
 
         val mainRouteProperties = mutableMapOf<String, Any?>()

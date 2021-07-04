@@ -38,8 +38,8 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
     private var isInitialized = false
     private var topics: List<String> = emptyList()
 
-    private var currentRoute: String = ""
     private var gistModalManager: GistModalManager = GistModalManager()
+    internal var currentRoute: String = ""
     internal var gistAnalytics: Analytics = Analytics()
     internal var gistQueue: Queue = Queue()
 
@@ -85,6 +85,10 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
                 Log.e(GIST_TAG, e.message, e)
             }
         }
+    }
+
+    fun setCurrentRoute(route: String) {
+        currentRoute = route
     }
 
     // Topics
@@ -209,6 +213,10 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         listeners.forEach { it.onError(message) }
     }
 
+    internal fun handleEmbedMessage(message: Message, elementId: String) {
+        listeners.forEach { it.embedMessage(message, elementId) }
+    }
+
     internal fun handleGistAction(message: Message, currentRoute: String, action: String) {
         listeners.forEach { it.onAction(message, currentRoute, action) }
     }
@@ -235,6 +243,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
 }
 
 interface GistListener {
+    fun embedMessage(message: Message, elementId: String)
     fun onMessageShown(message: Message)
     fun onMessageDismissed(message: Message)
     fun onError(message: Message)
