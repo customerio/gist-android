@@ -89,6 +89,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
 
     fun setCurrentRoute(route: String) {
         currentRoute = route
+        Log.i(GIST_TAG, "Current gist route set to: $currentRoute")
     }
 
     // Topics

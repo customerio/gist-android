@@ -68,12 +68,15 @@ class Queue: GistListener {
                     val gistProperties = GistMessageProperties.getGistProperties(message)
                     gistProperties.routeRule?.let { routeRule ->
                         if (!routeRule.toRegex().matches(GistSdk.currentRoute)) {
+                            Log.i(GIST_TAG, "Message route: $routeRule does not match current route: ${GistSdk.currentRoute}")
                             return@foreach
                         }
                     }
                     gistProperties.elementId?.let { elementId ->
+                        Log.i(GIST_TAG, "Embedding message from queue with queue id: ${message.queueId}")
                         GistSdk.handleEmbedMessage(message, elementId)
                     } ?: run {
+                        Log.i(GIST_TAG, "Showing message from queue with queue id: ${message.queueId}")
                         GistSdk.showMessage(message)
                     }
                 }
