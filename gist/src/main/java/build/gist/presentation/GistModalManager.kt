@@ -12,10 +12,10 @@ internal class GistModalManager: GistListener {
         GistSdk.addListener(this)
     }
 
-    internal fun showModalMessage(message: Message) {
+    internal fun showModalMessage(message: Message): Boolean {
         if (currentMessage != null) {
             Log.i(GIST_TAG, "Message ${message.messageId} not shown, activity is already showing.")
-            return
+            return false
         }
 
         Log.i(GIST_TAG, "Showing message: ${message.messageId}")
@@ -25,6 +25,7 @@ internal class GistModalManager: GistListener {
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         intent.putExtra(GIST_MESSAGE_INTENT, Gson().toJson(message));
         GistSdk.application.startActivity(intent)
+        return true
     }
 
     internal fun dismissActiveMessage() {
@@ -49,5 +50,5 @@ internal class GistModalManager: GistListener {
 
     override fun onMessageShown(message: Message) {}
 
-    override fun onAction(currentRoute: String, action: String) {}
+    override fun onAction(message: Message, currentRoute: String, action: String) {}
 }

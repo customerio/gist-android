@@ -70,7 +70,7 @@ class GistView @JvmOverloads constructor(
                     }
                 }
                 GistSdk.gistAnalytics.actionPerformed(message = message, route = route, system = system)
-                GistSdk.handleGistAction(currentRoute = route, action = action)
+                GistSdk.handleGistAction(message = message, currentRoute = route, action = action)
             }
         }
     }

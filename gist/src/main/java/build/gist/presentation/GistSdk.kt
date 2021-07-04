@@ -10,16 +10,9 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.ticker
 import kotlinx.coroutines.launch
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-import build.gist.BuildConfig
-import build.gist.data.NetworkUtilities
-import build.gist.data.events.Analytics
+import build.gist.data.listeners.Analytics
+import build.gist.data.listeners.Queue
 import build.gist.data.model.Message
-import build.gist.data.model.UserMessages
-import build.gist.data.repository.GistQueueService
 import java.util.*
 
 const val GIST_TAG: String = "Gist"
@@ -28,36 +21,6 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
     private const val SHARED_PREFERENCES_NAME = "gist-sdk"
     private const val SHARED_PREFERENCES_USER_TOKEN_KEY = "userToken"
     private const val POLL_INTERVAL = 10_000L
-
-    private const val ACTION_CLOSE = "gist://close"
-
-    private val gistQueueService by lazy {
-        val httpClient: OkHttpClient = OkHttpClient.Builder()
-            .addInterceptor { chain ->
-                getUserToken()?.let { userToken ->
-                    val request: Request = chain.request().newBuilder()
-                        .addHeader(NetworkUtilities.ORGANIZATION_ID_HEADER, organizationId)
-                        .addHeader(NetworkUtilities.USER_TOKEN_HEADER, userToken)
-                        .build()
-
-                    chain.proceed(request)
-                } ?: run {
-                    val request: Request = chain.request().newBuilder()
-                        .addHeader(NetworkUtilities.ORGANIZATION_ID_HEADER, organizationId)
-                        .build()
-
-                    chain.proceed(request)
-                }
-            }
-            .build()
-
-        Retrofit.Builder()
-            .baseUrl(BuildConfig.GIST_QUEUE_API_URL)
-            .addConverterFactory(GsonConverterFactory.create())
-            .client(httpClient)
-            .build()
-            .create(GistQueueService::class.java)
-    }
 
     private val sharedPreferences by lazy {
         application.getSharedPreferences(SHARED_PREFERENCES_NAME, MODE_PRIVATE)
@@ -75,14 +38,13 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
     private var isInitialized = false
     private var topics: List<String> = emptyList()
 
+    private var currentRoute: String = ""
     private var gistModalManager: GistModalManager = GistModalManager()
     internal var gistAnalytics: Analytics = Analytics()
+    internal var gistQueue: Queue = Queue()
 
     @JvmStatic
     fun getInstance() = this
-
-    override fun onActivityCreated(activity: Activity, p1: Bundle?) {
-    }
 
     override fun onActivityResumed(activity: Activity) {
         resumedActivities.add(activity.javaClass.name)
@@ -106,14 +68,6 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         }
     }
 
-    override fun onActivityStarted(activity: Activity) {}
-
-    override fun onActivityStopped(activity: Activity) {}
-
-    override fun onActivityDestroyed(activity: Activity) {}
-
-    override fun onActivitySaveInstanceState(activity: Activity, p1: Bundle) {}
-
     fun init(application: Application, organizationId: String) {
         this.application = application
         this.organizationId = organizationId
@@ -132,6 +86,8 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
             }
         }
     }
+
+    // Topics
 
     fun subscribeToTopic(topic: String) {
         var topicIndex = topics.indexOf(topic)
@@ -154,6 +110,8 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
     fun clearTopics() {
         topics = emptyList()
     }
+
+    // User Token
 
     fun clearUserToken() {
         ensureInitialized()
@@ -180,22 +138,27 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         }
     }
 
-    fun showMessage(message: Message): String {
+    // Messages
+
+    fun showMessage(message: Message): String? {
         ensureInitialized()
+        var messageShown = false
 
         GlobalScope.launch {
             try {
-                gistModalManager.showModalMessage(message)
+                messageShown = gistModalManager.showModalMessage(message)
             } catch (e: Exception) {
                 Log.e(GIST_TAG, "Failed to show message: ${e.message}", e)
             }
         }
-        return message.instanceId
+        return if (messageShown) message.instanceId else null
     }
 
     fun dismissMessage() {
         gistModalManager.dismissActiveMessage()
     }
+
+    // Listeners
 
     fun addListener(listener: GistListener) {
         listeners.add(listener)
@@ -209,23 +172,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         listeners.clear()
     }
 
-    private fun logView(message: Message) {
-        ensureInitialized()
-
-        GlobalScope.launch {
-            try {
-                if (message.queueId != null) {
-                    Log.i(GIST_TAG, "Logging view for user message: ${message.messageId}, with queue id: ${message.queueId}")
-                    gistQueueService.logUserMessageView(message.queueId)
-                } else {
-                    Log.i(GIST_TAG, "Logging view for message: ${message.messageId}")
-                    gistQueueService.logMessageView(message.messageId)
-                }
-            } catch (e: Exception) {
-                Log.e(GIST_TAG, "Failed to log message view: ${e.message}", e)
-            }
-        }
-    }
+    // Gist Message Observer
 
     private fun observeMessagesForUser() {
         // Clean up any previous observers
@@ -238,18 +185,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
                 // Poll for user messages
                 val ticker = ticker(POLL_INTERVAL, context = this.coroutineContext)
                 for (tick in ticker) {
-                    Log.i(GIST_TAG, "Fetching user messages")
-                    val latestMessagesResponse = gistQueueService.fetchMessagesForUser(UserMessages(getTopics()))
-                    if (latestMessagesResponse.code() == 204) {
-                        // No content, don't do anything
-                        Log.i(GIST_TAG, "No messages found for user")
-                        continue
-                    } else if (latestMessagesResponse.isSuccessful) {
-                        Log.i(GIST_TAG, "Found ${latestMessagesResponse.body()?.count()} messages for user")
-                        latestMessagesResponse.body()?.last()?.let { message ->
-                            showMessage(message)
-                        }
-                    }
+                    gistQueue.fetchUserMessages()
                 }
             } catch (e: CancellationException) {
                 // Co-routine was cancelled, cancel internal timer
@@ -273,11 +209,11 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         listeners.forEach { it.onError(message) }
     }
 
-    internal fun handleGistAction(currentRoute: String, action: String) {
-        listeners.forEach { it.onAction(currentRoute, action) }
+    internal fun handleGistAction(message: Message, currentRoute: String, action: String) {
+        listeners.forEach { it.onAction(message, currentRoute, action) }
     }
 
-    private fun getUserToken(): String? {
+    internal fun getUserToken(): String? {
         return sharedPreferences.getString(SHARED_PREFERENCES_USER_TOKEN_KEY, null)
     }
 
@@ -287,18 +223,20 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
 
     private fun isAppResumed() = resumedActivities.isNotEmpty()
 
-    /*
-    private fun canShowMessage(): Boolean {
-        return isAppResumed() && !isGistActivityResumed()
-    }
+    override fun onActivityCreated(activity: Activity, p1: Bundle?) {}
 
-    private fun isGistModalActivityActive() = resumedActivities.contains(GistModalActivity::class.java.name)
-    */
+    override fun onActivityStarted(activity: Activity) {}
+
+    override fun onActivityStopped(activity: Activity) {}
+
+    override fun onActivityDestroyed(activity: Activity) {}
+
+    override fun onActivitySaveInstanceState(activity: Activity, p1: Bundle) {}
 }
 
 interface GistListener {
     fun onMessageShown(message: Message)
     fun onMessageDismissed(message: Message)
     fun onError(message: Message)
-    fun onAction(currentRoute: String, action: String)
+    fun onAction(message: Message, currentRoute: String, action: String)
 }

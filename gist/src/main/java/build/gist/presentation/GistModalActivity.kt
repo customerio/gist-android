@@ -103,5 +103,5 @@ class GistModalActivity : AppCompatActivity(), GistListener, GistViewListener {
         finish()
     }
 
-    override fun onAction(currentRoute: String, action: String) {}
+    override fun onAction(message: Message, currentRoute: String, action: String) {}
 }
