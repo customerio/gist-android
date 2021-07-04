@@ -16,6 +16,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.regex.PatternSyntaxException
 
 class Queue: GistListener {
 
@@ -67,8 +68,13 @@ class Queue: GistListener {
                 latestMessagesResponse.body()?.forEach foreach@{ message ->
                     val gistProperties = GistMessageProperties.getGistProperties(message)
                     gistProperties.routeRule?.let { routeRule ->
-                        if (!routeRule.toRegex().matches(GistSdk.currentRoute)) {
-                            Log.i(GIST_TAG, "Message route: $routeRule does not match current route: ${GistSdk.currentRoute}")
+                        try {
+                            if (!routeRule.toRegex().matches(GistSdk.currentRoute)) {
+                                Log.i(GIST_TAG, "Message route: $routeRule does not match current route: ${GistSdk.currentRoute}")
+                                return@foreach
+                            }
+                        } catch (e: PatternSyntaxException) {
+                            Log.i(GIST_TAG, "Invalid route rule regex: $routeRule")
                             return@foreach
                         }
                     }
