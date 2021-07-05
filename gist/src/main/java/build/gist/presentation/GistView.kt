@@ -28,6 +28,7 @@ class GistView @JvmOverloads constructor(
     var listener: GistViewListener? = null
 
     init {
+        engineWebView.alpha = 0.0f
         engineWebView.listener = this
         this.addView(engineWebView)
     }
@@ -89,6 +90,7 @@ class GistView @JvmOverloads constructor(
     override fun routeLoaded(route: String) {
         currentRoute = route
         if (firstLoad) {
+            engineWebView.alpha = 1.0f
             currentMessage?.let { message ->
                 GistSdk.handleGistLoaded(message)
                 GistSdk.gistAnalytics.messageLoaded(message = message, route = route)

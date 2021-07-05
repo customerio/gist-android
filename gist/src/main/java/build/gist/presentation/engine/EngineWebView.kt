@@ -46,6 +46,9 @@ internal class EngineWebView @JvmOverloads constructor(
                 override fun shouldOverrideUrlLoading(view: WebView, url: String): Boolean {
                     return true
                 }
+                override fun onReceivedError(view: WebView?, errorCod: Int, description: String, failingUrl: String?) {
+                    listener?.error()
+                }
             }
         }?: run {
             listener?.error()
