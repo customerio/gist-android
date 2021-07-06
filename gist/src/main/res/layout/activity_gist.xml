@@ -3,6 +3,7 @@
     android:id="@+id/modalGistViewLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:visibility="gone"
     android:alpha="0">
     <build.gist.presentation.GistView
         android:id="@+id/gistView"

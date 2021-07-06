@@ -3,9 +3,11 @@ package build.gist.presentation
 import android.animation.AnimatorInflater
 import android.content.Context
 import android.content.Intent
+import android.opengl.Visibility
 import android.os.Bundle
 import android.util.Log
 import android.view.Gravity
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.animation.doOnEnd
 import build.gist.R
@@ -75,6 +77,7 @@ class GistModalActivity : AppCompatActivity(), GistListener, GistViewListener {
 
     override fun onMessageShown(message: Message) {
         runOnUiThread {
+            binding.modalGistViewLayout.visibility = View.VISIBLE
             val animation = AnimatorInflater.loadAnimator(super.getBaseContext(), R.animator.animate_in)
             animation.setTarget(binding.modalGistViewLayout)
             animation.start()
