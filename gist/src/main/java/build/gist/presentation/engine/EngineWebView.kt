@@ -3,11 +3,11 @@ package build.gist.presentation.engine
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Color
+import android.net.http.SslError
 import android.util.AttributeSet
 import android.util.Base64
 import android.util.Log
-import android.webkit.WebView
-import android.webkit.WebViewClient
+import android.webkit.*
 import android.widget.FrameLayout
 import build.gist.BuildConfig
 import build.gist.data.model.engine.EngineWebConfiguration
@@ -31,7 +31,9 @@ internal class EngineWebView @JvmOverloads constructor(
     fun setup(configuration: EngineWebConfiguration) {
         val jsonString = Gson().toJson(configuration)
         encodeToBase64(jsonString)?.let { options ->
-            webView.loadUrl("${BuildConfig.GIST_RENDERER}/index.html?options=${options}")
+            val messageUrl = "${BuildConfig.GIST_RENDERER}/index.html?options=${options}"
+            Log.i(GIST_TAG, "Rendering message with URL: $messageUrl")
+            webView.loadUrl(messageUrl)
             webView.settings.javaScriptEnabled = true
             webView.settings.allowFileAccess = true
             webView.settings.allowContentAccess = true
@@ -43,10 +45,24 @@ internal class EngineWebView @JvmOverloads constructor(
                 override fun onPageFinished(view: WebView, url: String?) {
                     view.loadUrl("javascript:window.parent.postMessage = function(message) {window.appInterface.postMessage(JSON.stringify(message))}")
                 }
+
                 override fun shouldOverrideUrlLoading(view: WebView, url: String): Boolean {
-                    return true
+                    return !url.startsWith("https://code.gist.build")
                 }
+
                 override fun onReceivedError(view: WebView?, errorCod: Int, description: String, failingUrl: String?) {
+                    listener?.error()
+                }
+
+                override fun onReceivedHttpError(view: WebView?, request: WebResourceRequest?, errorResponse: WebResourceResponse?) {
+                    listener?.error()
+                }
+
+                override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: WebResourceError?) {
+                    listener?.error()
+                }
+
+                override fun onReceivedSslError(view: WebView?, handler: SslErrorHandler?, error: SslError?) {
                     listener?.error()
                 }
             }
