@@ -18,10 +18,12 @@ import build.gist.databinding.ActivityGistBinding
 import com.google.gson.Gson
 
 const val GIST_MESSAGE_INTENT: String = "GIST_MESSAGE"
+const val GIST_MODAL_POSITION_INTENT: String = "GIST_MODAL_POSITION"
 
 class GistModalActivity : AppCompatActivity(), GistListener, GistViewListener {
     private lateinit var binding: ActivityGistBinding
     private var currentMessage: Message? = null
+    private var messagePosition: MessagePosition = MessagePosition.CENTER
 
     companion object {
         fun newIntent(context: Context): Intent {
@@ -35,15 +37,21 @@ class GistModalActivity : AppCompatActivity(), GistListener, GistViewListener {
         binding = ActivityGistBinding.inflate(layoutInflater)
         setContentView(binding.root)
         val messageStr = this.intent.getStringExtra(GIST_MESSAGE_INTENT)
+        val modalPositionStr = this.intent.getStringExtra(GIST_MODAL_POSITION_INTENT)
         Gson().fromJson(messageStr, Message::class.java)?.let { messageObj ->
             currentMessage = messageObj
             currentMessage?.let { message ->
                 binding.gistView.listener = this
                 binding.gistView.setup(message)
-                when (GistMessageProperties.getGistProperties(message).position) {
+                messagePosition = if (modalPositionStr == null) {
+                    GistMessageProperties.getGistProperties(message).position
+                } else {
+                    MessagePosition.valueOf(modalPositionStr.uppercase())
+                }
+                when (messagePosition) {
                     MessagePosition.CENTER -> binding.modalGistViewLayout.setVerticalGravity(Gravity.CENTER_VERTICAL)
                     MessagePosition.BOTTOM -> binding.modalGistViewLayout.setVerticalGravity(Gravity.BOTTOM)
-                    else -> binding.modalGistViewLayout.setVerticalGravity(Gravity.TOP)
+                    MessagePosition.TOP -> binding.modalGistViewLayout.setVerticalGravity(Gravity.TOP)
                 }
             }
         } ?: run {
@@ -63,7 +71,11 @@ class GistModalActivity : AppCompatActivity(), GistListener, GistViewListener {
     }
 
     override fun finish() {
-        val animation = AnimatorInflater.loadAnimator(this, R.animator.animate_out)
+        val animation = if (messagePosition == MessagePosition.TOP) {
+            AnimatorInflater.loadAnimator(this, R.animator.animate_out_to_top)
+        } else {
+            AnimatorInflater.loadAnimator(this, R.animator.animate_out_to_bottom)
+        }
         animation.setTarget(binding.modalGistViewLayout)
         animation.start()
         animation.doOnEnd {
@@ -78,7 +90,11 @@ class GistModalActivity : AppCompatActivity(), GistListener, GistViewListener {
     override fun onMessageShown(message: Message) {
         runOnUiThread {
             binding.modalGistViewLayout.visibility = View.VISIBLE
-            val animation = AnimatorInflater.loadAnimator(super.getBaseContext(), R.animator.animate_in)
+            val animation = if (messagePosition == MessagePosition.TOP) {
+                AnimatorInflater.loadAnimator(this, R.animator.animate_in_from_top)
+            } else {
+                AnimatorInflater.loadAnimator(this, R.animator.animate_in_from_bottom)
+            }
             animation.setTarget(binding.modalGistViewLayout)
             animation.start()
         }

@@ -3,6 +3,7 @@ package build.gist.presentation
 import android.content.Intent
 import android.util.Log
 import build.gist.data.model.Message
+import build.gist.data.model.MessagePosition
 import com.google.gson.Gson
 
 internal class GistModalManager: GistListener {
@@ -12,7 +13,7 @@ internal class GistModalManager: GistListener {
         GistSdk.addListener(this)
     }
 
-    internal fun showModalMessage(message: Message): Boolean {
+    internal fun showModalMessage(message: Message, position: MessagePosition? = null): Boolean {
         if (currentMessage != null) {
             Log.i(GIST_TAG, "Message ${message.messageId} not shown, activity is already showing.")
             return false
@@ -23,7 +24,8 @@ internal class GistModalManager: GistListener {
 
         val intent = GistModalActivity.newIntent(GistSdk.application)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        intent.putExtra(GIST_MESSAGE_INTENT, Gson().toJson(message));
+        intent.putExtra(GIST_MESSAGE_INTENT, Gson().toJson(message))
+        intent.putExtra(GIST_MODAL_POSITION_INTENT, position?.toString())
         GistSdk.application.startActivity(intent)
         return true
     }

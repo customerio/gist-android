@@ -13,6 +13,7 @@ import kotlinx.coroutines.launch
 import build.gist.data.listeners.Analytics
 import build.gist.data.listeners.Queue
 import build.gist.data.model.Message
+import build.gist.data.model.MessagePosition
 import java.util.*
 
 const val GIST_TAG: String = "Gist"
@@ -145,13 +146,13 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
 
     // Messages
 
-    fun showMessage(message: Message): String? {
+    fun showMessage(message: Message, position: MessagePosition? = null): String? {
         ensureInitialized()
         var messageShown = false
 
         GlobalScope.launch {
             try {
-                messageShown = gistModalManager.showModalMessage(message)
+                messageShown = gistModalManager.showModalMessage(message, position)
             } catch (e: Exception) {
                 Log.e(GIST_TAG, "Failed to show message: ${e.message}", e)
             }

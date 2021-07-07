@@ -3,9 +3,11 @@ package build.gist_example
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.webkit.WebView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import build.gist.data.model.Message
+import build.gist.data.model.MessagePosition
 import build.gist.presentation.GIST_TAG
 import build.gist.presentation.GistListener
 import build.gist.presentation.GistSdk
@@ -23,6 +25,8 @@ class MainActivity : AppCompatActivity(), GistViewListener {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        WebView.setWebContentsDebuggingEnabled(true)
 
         if (intent?.action == Intent.ACTION_VIEW) {
             Log.d(GIST_TAG, "View Intent: ${intent.dataString}")
@@ -62,7 +66,7 @@ class MainActivity : AppCompatActivity(), GistViewListener {
 
         binding.launchButton.setOnClickListener {
             val message = Message(messageId = "artists", properties = mainRouteProperties)
-            gistSdk.showMessage(message)
+            gistSdk.showMessage(message, MessagePosition.TOP)
         }
 
         binding.gistView.setup(message = Message("version-2-0"))
