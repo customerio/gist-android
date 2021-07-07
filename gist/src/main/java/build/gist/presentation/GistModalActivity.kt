@@ -3,11 +3,11 @@ package build.gist.presentation
 import android.animation.AnimatorInflater
 import android.content.Context
 import android.content.Intent
-import android.opengl.Visibility
 import android.os.Bundle
 import android.util.Log
 import android.view.Gravity
 import android.view.View
+import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.animation.doOnEnd
 import build.gist.R
@@ -34,6 +34,7 @@ class GistModalActivity : AppCompatActivity(), GistListener, GistViewListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         GistSdk.addListener(this)
+        window.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)
         binding = ActivityGistBinding.inflate(layoutInflater)
         setContentView(binding.root)
         val messageStr = this.intent.getStringExtra(GIST_MESSAGE_INTENT)
@@ -80,15 +81,17 @@ class GistModalActivity : AppCompatActivity(), GistListener, GistViewListener {
         animation.start()
         animation.doOnEnd {
             super.finish()
-            currentMessage?.let { message ->
-                GistSdk.removeListener(this)
-                GistSdk.handleGistClosed(message)
-            }
         }
+    }
+
+    override fun onDestroy() {
+        GistSdk.removeListener(this)
+        super.onDestroy()
     }
 
     override fun onMessageShown(message: Message) {
         runOnUiThread {
+            window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)
             binding.modalGistViewLayout.visibility = View.VISIBLE
             val animation = if (messagePosition == MessagePosition.TOP) {
                 AnimatorInflater.loadAnimator(this, R.animator.animate_in_from_top)
@@ -112,7 +115,6 @@ class GistModalActivity : AppCompatActivity(), GistListener, GistViewListener {
         Log.i(GIST_TAG, "Message Size Changed")
         val params = binding.gistView.layoutParams
         params.height = height
-        params.width = width
         runOnUiThread {
             binding.modalGistViewLayout.updateViewLayout(binding.gistView, params)
         }
