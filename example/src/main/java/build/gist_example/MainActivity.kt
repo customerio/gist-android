@@ -66,7 +66,7 @@ class MainActivity : AppCompatActivity(), GistViewListener {
 
         binding.launchButton.setOnClickListener {
             val message = Message(messageId = "artists", properties = mainRouteProperties)
-            gistSdk.showMessage(message, MessagePosition.TOP)
+            gistSdk.showMessage(message, MessagePosition.CENTER)
         }
 
         binding.gistView.setup(message = Message("version-2-0"))

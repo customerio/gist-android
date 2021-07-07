@@ -50,6 +50,7 @@ class GistView @JvmOverloads constructor(
     override fun tap(action: String, system: Boolean) {
         currentMessage?.let { message ->
             currentRoute?.let { route ->
+                GistSdk.handleGistAction(message = message, currentRoute = route, action = action)
                 when {
                     action == "gist://close" -> {
                         Log.i(GIST_TAG, "Dismissing from action: $action")
@@ -58,20 +59,19 @@ class GistView @JvmOverloads constructor(
                     system -> {
                         try {
                             Log.i(GIST_TAG, "Dismissing from system action: $action")
+                            dismissMessage(message, route)
                             val intent = Intent(Intent.ACTION_VIEW)
                             intent.data = Uri.parse(action)
                             startActivity(context, intent, null)
-                            dismissMessage(message, route)
                         } catch (e: ActivityNotFoundException) {
                             Log.i(GIST_TAG, "System action not handled")
                         }
                     }
                     else -> {
                         Log.i(GIST_TAG, "Action selected: $action")
+                        GistSdk.gistAnalytics.actionPerformed(message = message, route = route, system = system)
                     }
                 }
-                GistSdk.gistAnalytics.actionPerformed(message = message, route = route, system = system)
-                GistSdk.handleGistAction(message = message, currentRoute = route, action = action)
             }
         }
     }
