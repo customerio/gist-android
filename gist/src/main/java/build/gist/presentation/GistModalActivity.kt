@@ -72,15 +72,17 @@ class GistModalActivity : AppCompatActivity(), GistListener, GistViewListener {
     }
 
     override fun finish() {
-        val animation = if (messagePosition == MessagePosition.TOP) {
-            AnimatorInflater.loadAnimator(this, R.animator.animate_out_to_top)
-        } else {
-            AnimatorInflater.loadAnimator(this, R.animator.animate_out_to_bottom)
-        }
-        animation.setTarget(binding.modalGistViewLayout)
-        animation.start()
-        animation.doOnEnd {
-            super.finish()
+        runOnUiThread {
+            val animation = if (messagePosition == MessagePosition.TOP) {
+                AnimatorInflater.loadAnimator(this, R.animator.animate_out_to_top)
+            } else {
+                AnimatorInflater.loadAnimator(this, R.animator.animate_out_to_bottom)
+            }
+            animation.setTarget(binding.modalGistViewLayout)
+            animation.start()
+            animation.doOnEnd {
+                super.finish()
+            }
         }
     }
 
