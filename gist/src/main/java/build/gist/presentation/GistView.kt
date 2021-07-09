@@ -58,6 +58,7 @@ class GistView @JvmOverloads constructor(
                     }
                     system -> {
                         try {
+                            GistSdk.gistAnalytics.actionPerformed(message = message, route = route, system = system)
                             Log.i(GIST_TAG, "Dismissing from system action: $action")
                             dismissMessage(message, route)
                             val intent = Intent(Intent.ACTION_VIEW)
@@ -69,7 +70,7 @@ class GistView @JvmOverloads constructor(
                     }
                     else -> {
                         Log.i(GIST_TAG, "Action selected: $action")
-                        GistSdk.gistAnalytics.actionPerformed(message = message, route = route, system = system)
+                        GistSdk.gistAnalytics.actionPerformed(message = message, route = route, false)
                     }
                 }
             }
@@ -77,8 +78,8 @@ class GistView @JvmOverloads constructor(
     }
 
     private fun dismissMessage(message: Message, route: String) {
-        GistSdk.handleGistClosed(message)
         GistSdk.gistAnalytics.messageDismissed(message = message, route = route)
+        GistSdk.handleGistClosed(message)
     }
 
     override fun routeError(route: String) {
@@ -92,8 +93,8 @@ class GistView @JvmOverloads constructor(
         if (firstLoad) {
             engineWebView.alpha = 1.0f
             currentMessage?.let { message ->
-                GistSdk.handleGistLoaded(message)
                 GistSdk.gistAnalytics.messageLoaded(message = message, route = route)
+                GistSdk.handleGistLoaded(message)
             }
         }
     }

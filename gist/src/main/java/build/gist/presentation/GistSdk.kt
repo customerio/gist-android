@@ -38,11 +38,11 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
     private var timer: Timer? = null
     private var isInitialized = false
     private var topics: List<String> = emptyList()
+    private var gistQueue: Queue = Queue()
 
     private var gistModalManager: GistModalManager = GistModalManager()
     internal var currentRoute: String = ""
     internal var gistAnalytics: Analytics = Analytics()
-    internal var gistQueue: Queue = Queue()
 
     @JvmStatic
     fun getInstance() = this
