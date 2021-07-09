@@ -30,7 +30,7 @@ class GistMessageProperties {
             message.properties?.let { properties ->
                 properties["gist"]?.let { gistProperties ->
                     (gistProperties as Map<String, Any?>).let { gistProperties ->
-                        gistProperties["routeRule"]?.let { rule ->
+                        gistProperties["routeRuleAndroid"]?.let { rule ->
                             (rule as String).let { stringRule ->
                                 routeRule = stringRule
                             }
