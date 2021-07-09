@@ -1,4 +1,4 @@
-package sh.bourbon.gist_example
+package build.gist_example
 
 data class Artist(
     val name: String,
