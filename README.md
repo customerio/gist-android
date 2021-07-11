@@ -1,10 +1,10 @@
 # Gist for Android
 
-Gist gives you access to a library of ready built micro-experiences that can be easily dropped into your application without writing a line of code.
+Gist enables you to create embeddable experiences that range from simple welcome messages to complex multi-step flows.
 
 ## Installation
 ```gradle
-implementation 'sh.bourbon:gist:1.+'
+implementation 'sh.bourbon:gist:2.+'
 
 repositories {
     maven {
@@ -12,8 +12,6 @@ repositories {
     }
 }
 ```
-
-Note: Make sure to use an x86_64 emulator. x86 is not supported.
 
 ## Setup
 Initialize Gist inside the application’s `onCreate` method. A shared Gist instance can be fetched using `GistSdk.getInstance()`.
@@ -44,6 +42,14 @@ To clear the user token:
 GistSdk.getInstance().clearUserToken()
 ```
 
+### Setting Your Current Route
+Gist is able to show messages when a user reaches a particular route within your product. This is completely optional but messages containing route rules will not be displayed.
+In your route handler add:
+
+```kotlin
+GistSdk.getInstance().setCurrentRoute("user/profile")
+```
+
 ### Broadcasts
 Broadcasts enable you to receive messages based on topics the client is subscribed to.
 
@@ -68,7 +74,7 @@ Gist gives you the option to programmatically trigger in-app messaging flows wit
 ### Show Message
 ```kotlin
 val message = Message("artists")
-GistSdk.getInstance().showMessage(message)
+GistSdk.getInstance().showMessage(message, MessagePosition.CENTER)
 ```
 
 ### Adding Message Properties
@@ -84,20 +90,45 @@ Note: Properties also support `data` classes
 GistSdk.getInstance().dismissMessage()
 ```
 
+## Embedding
+Gist gives you the option to embed a message within your native product. Actions performed within the view are reported back to `GistListener`, View size changes are reported to `GistViewListener`.
+
+```xml
+<build.gist.presentation.GistView
+    android:id="@+id/gistView"
+    android:layout_below="@id/button"
+    android:layout_width="match_parent"
+    android:layout_height="200dp" />
+```   
+
+```kotlin
+binding.gistView.setup(message = Message("message-id"))
+binding.gistView.listener = this
+```
+
+### Adjust View Height Based On Content
+
+```kotlin
+override fun onGistViewSizeChanged(width: Int, height: Int) {
+    val params = binding.gistView.layoutParams
+    params.height = height
+    runOnUiThread {
+        binding.mainLayout.updateViewLayout(binding.gistView, params)
+    }
+}
+```
+
 ## Event Handling
 The library exposes a listener which you can hook into, this gives you the option to know when a message is shown, dismissed or when an action occurs within the message.
 
 ```kotlin
 interface GistListener {
+    fun embedMessage(message: Message, elementId: String)
     fun onMessageShown(message: Message)
     fun onMessageDismissed(message: Message)
     fun onError(message: Message)
-    fun onAction(currentRoute: String, action: String)
+    fun onAction(message: Message, currentRoute: String, action: String)
 }
 ```
 
-## Integrations
-Gist enables you to plug in external integrations that trigger in-app messages from external sources.
-
-### A list of available integrations can be found below:
-- [Gist Firebase](https://gitlab.com/bourbonltd/gist-firebase-android)
+Whenever a message is queued for embedding, the event embedMessage is triggered. This leaves it up to the developer to decide where to place the view.
