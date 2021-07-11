@@ -11,16 +11,6 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-
-
-        Properties properties = new Properties()
-        File propertiesFile = project.file('secret.properties')
-        if (propertiesFile.exists()) {
-            properties.load(propertiesFile.newDataInputStream())
-        }
-
-        buildConfigField("String", "ORGANIZATION_ID", '"' + getPropertyOrEnv("GIST_EXAMPLE_ORGANIZATION_ID", properties) + '"')
-        buildConfigField("String", "USER_ID", '"' + getPropertyOrEnv("GIST_EXAMPLE_USER_ID", properties) + '"')
     }
     buildTypes {
         release {
@@ -46,14 +36,4 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
 
     implementation project(":gist")
-}
-
-static def getPropertyOrEnv(String key, Properties properties) {
-    if (properties.getProperty(key) != null) {
-        return properties.getProperty(key)
-    } else if (System.getenv(key) != null) {
-        return System.getenv(key)
-    } else {
-        throw new Exception(key + " must be set in either secret.properties or as an environment variable")
-    }
 }

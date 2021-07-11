@@ -23,6 +23,9 @@ class MainActivity : AppCompatActivity(), GistViewListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        gistSdk.setCurrentRoute("home")
+
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
