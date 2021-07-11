@@ -4,7 +4,7 @@ Gist enables you to create embeddable experiences that range from simple welcome
 
 ## Installation
 ```gradle
-implementation 'sh.bourbon:gist:2.+'
+implementation 'build:gist:2.+'
 
 repositories {
     maven {
@@ -20,7 +20,7 @@ The Organization Id property can be retrieved from the Gist dashboard.
 
 ```kotlin
 import android.app.Application
-import sh.bourbon.gist.presentation.GistSdk
+import build.gist.presentation.GistSdk
 
 class Application : Application() {
     override fun onCreate() {
