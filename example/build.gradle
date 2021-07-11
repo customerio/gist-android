@@ -1,27 +1,16 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-android-extensions'
 
 android {
-    compileSdkVersion 29
-    buildToolsVersion "29.0.2"
+    compileSdkVersion 30
+    buildToolsVersion "30.0.2"
     defaultConfig {
-        applicationId "sh.bourbon.gist"
-        minSdkVersion 16
-        targetSdkVersion 29
+        applicationId "build.gist"
+        minSdkVersion 22
+        targetSdkVersion 30
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-
-
-        Properties properties = new Properties()
-        File propertiesFile = project.file('secret.properties')
-        if (propertiesFile.exists()) {
-            properties.load(propertiesFile.newDataInputStream())
-        }
-
-        buildConfigField("String", "ORGANIZATION_ID", '"' + getPropertyOrEnv("GIST_EXAMPLE_ORGANIZATION_ID", properties) + '"')
-        buildConfigField("String", "USER_ID", '"' + getPropertyOrEnv("GIST_EXAMPLE_USER_ID", properties) + '"')
     }
     buildTypes {
         release {
@@ -33,25 +22,18 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+    buildFeatures {
+        viewBinding true
+    }
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation 'androidx.appcompat:appcompat:1.2.0'
-    implementation 'androidx.core:core-ktx:1.3.2'
+    implementation 'androidx.appcompat:appcompat:1.3.0'
+    implementation 'androidx.core:core-ktx:1.6.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
 
     implementation project(":gist")
-}
-
-static def getPropertyOrEnv(String key, Properties properties) {
-    if (properties.getProperty(key) != null) {
-        return properties.getProperty(key)
-    } else if (System.getenv(key) != null) {
-        return System.getenv(key)
-    } else {
-        throw new Exception(key + " must be set in either secret.properties or as an environment variable")
-    }
 }

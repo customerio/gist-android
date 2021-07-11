@@ -1,4 +1,4 @@
-package sh.bourbon.gist.data.model
+package build.gist.data.model
 
 data class LogEvent(
     val name: String,

@@ -24,7 +24,7 @@ build:
 
 deploy_to_gitlab:
   stage: deploy
-  image: gradle:6.5-jdk11
+  image: gradle:6.7-jdk11
   script:
     - 'gradle publish'
   except:
