@@ -14,6 +14,7 @@ import build.gist.data.model.Message
 import build.gist.data.model.engine.EngineWebConfiguration
 import build.gist.presentation.engine.EngineWebView
 import build.gist.presentation.engine.EngineWebViewListener
+import java.net.URI
 
 
 class GistView @JvmOverloads constructor(
@@ -52,7 +53,19 @@ class GistView @JvmOverloads constructor(
             currentRoute?.let { route ->
                 GistSdk.handleGistAction(message = message, currentRoute = route, action = action)
                 when {
-                    action == "gist://close" -> {
+                    action.startsWith("gist://") -> {
+                        var gistAction = URI(action)
+                        when (gistAction.host) {
+                            "close" -> {
+
+                            }
+                            "loadPage" -> {
+
+                            }
+                            "showMessage" -> {
+
+                            }
+                        }
                         Log.i(GIST_TAG, "Dismissing from action: $action")
                         dismissMessage(message, route)
                     }
