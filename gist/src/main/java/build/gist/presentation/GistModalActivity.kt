@@ -88,6 +88,7 @@ class GistModalActivity : AppCompatActivity(), GistListener, GistViewListener {
 
     override fun onDestroy() {
         GistSdk.removeListener(this)
+        GistSdk.dismissMessage()
         super.onDestroy()
     }
 
