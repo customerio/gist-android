@@ -66,7 +66,7 @@ class GistView @JvmOverloads constructor(
                             "close" -> {
                                 shouldLogAction = false
                                 Log.i(GIST_TAG, "Dismissing from action: $action")
-                                dismissMessage(message, route)
+                                GistSdk.handleGistClosed(message)
                             }
                             "loadPage" -> {
                                 val url = urlQuery.getValue("url")
@@ -75,7 +75,7 @@ class GistView @JvmOverloads constructor(
                                 startActivity(context, intent, null)
                             }
                             "showMessage" -> {
-                                dismissMessage(message, route)
+                                GistSdk.handleGistClosed(message)
                                 val messageId = urlQuery.getValue("messageId")
                                 val propertiesBase64 = urlQuery.getValue("properties")
                                 val parameterBinary = Base64.decode(propertiesBase64, Base64.DEFAULT)
@@ -97,7 +97,7 @@ class GistView @JvmOverloads constructor(
                             shouldLogAction = false
                             GistSdk.gistAnalytics.actionPerformed(message = message, route = route, system = system)
                             Log.i(GIST_TAG, "Dismissing from system action: $action")
-                            dismissMessage(message, route)
+                            GistSdk.handleGistClosed(message)
                             val intent = Intent(Intent.ACTION_VIEW)
                             intent.data = Uri.parse(action)
                             startActivity(context, intent, null)
@@ -114,9 +114,13 @@ class GistView @JvmOverloads constructor(
         }
     }
 
-    private fun dismissMessage(message: Message, route: String) {
-        GistSdk.gistAnalytics.messageDismissed(message = message, route = route)
-        GistSdk.handleGistClosed(message)
+    override fun onDetachedFromWindow() {
+        currentMessage?.let { currentMessage ->
+            currentRoute?.let { currentRoute ->
+                GistSdk.gistAnalytics.messageDismissed(message = currentMessage, route = currentRoute)
+            }
+        }
+        super.onDetachedFromWindow()
     }
 
     override fun routeError(route: String) {
