@@ -1,10 +1,12 @@
 package build.gist.data.listeners
 
+import android.util.Log
 import build.gist.BuildConfig
 import build.gist.data.NetworkUtilities
 import build.gist.data.model.LogEvent
 import build.gist.data.model.Message
 import build.gist.data.repository.GistAnalyticsService
+import build.gist.presentation.GIST_TAG
 import build.gist.presentation.GistSdk
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -42,49 +44,73 @@ class Analytics {
 
     fun messageLoaded(message: Message, route: String) {
         GlobalScope.launch {
-            gistAnalyticsService.logOrganizationEvent(
-                LogEvent(
-                    ANALYTICS_EVENT_LOADED,
-                    route,
-                    message.instanceId,
-                    message.queueId
+            try {
+                gistAnalyticsService.logOrganizationEvent(
+                    LogEvent(
+                        ANALYTICS_EVENT_LOADED,
+                        route,
+                        message.instanceId,
+                        message.queueId
+                    )
                 )
-            )
+            }
+            catch (e: Exception) {
+                Log.e(
+                    GIST_TAG,
+                    "Error logging message loaded: ${e.message}"
+                )
+            }
         }
     }
 
     fun messageDismissed(message: Message, route: String) {
         GlobalScope.launch {
-            gistAnalyticsService.logOrganizationEvent(
-                LogEvent(
-                    ANALYTICS_EVENT_DISMISSED,
-                    route,
-                    message.instanceId,
-                    message.queueId
+            try {
+                gistAnalyticsService.logOrganizationEvent(
+                    LogEvent(
+                        ANALYTICS_EVENT_DISMISSED,
+                        route,
+                        message.instanceId,
+                        message.queueId
+                    )
                 )
-            )
+            }
+            catch (e: Exception) {
+                Log.e(
+                    GIST_TAG,
+                    "Error logging message dismissed: ${e.message}"
+                )
+            }
         }
     }
 
     fun actionPerformed(message: Message, route: String, system: Boolean) {
         GlobalScope.launch {
-            if (system) {
-                gistAnalyticsService.logOrganizationEvent(
-                    LogEvent(
-                        ANALYTICS_EVENT_SYSTEM_ACTION,
-                        route,
-                        message.instanceId,
-                        message.queueId
+            try {
+                if (system) {
+                    gistAnalyticsService.logOrganizationEvent(
+                        LogEvent(
+                            ANALYTICS_EVENT_SYSTEM_ACTION,
+                            route,
+                            message.instanceId,
+                            message.queueId
+                        )
                     )
-                )
-            } else {
-                gistAnalyticsService.logOrganizationEvent(
-                    LogEvent(
-                        ANALYTICS_EVENT_ACTION,
-                        route,
-                        message.instanceId,
-                        message.queueId
+                } else {
+                    gistAnalyticsService.logOrganizationEvent(
+                        LogEvent(
+                            ANALYTICS_EVENT_ACTION,
+                            route,
+                            message.instanceId,
+                            message.queueId
+                        )
                     )
+                }
+            }
+            catch (e: Exception) {
+                Log.e(
+                    GIST_TAG,
+                    "Error logging message action performed: ${e.message}"
                 )
             }
         }

@@ -35,7 +35,6 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
     private var resumedActivities = mutableSetOf<String>()
 
     private var observeUserMessagesJob: Job? = null
-    private var timer: Timer? = null
     private var isInitialized = false
     private var topics: List<String> = emptyList()
     private var gistQueue: Queue = Queue()
@@ -124,7 +123,6 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         // Remove user token from preferences & cancel job / timer.
         sharedPreferences.edit().remove(SHARED_PREFERENCES_USER_TOKEN_KEY).apply()
         observeUserMessagesJob?.cancel()
-        timer = null
     }
 
     fun setUserToken(userToken: String) {
@@ -183,7 +181,6 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
     private fun observeMessagesForUser() {
         // Clean up any previous observers
         observeUserMessagesJob?.cancel()
-        timer = null
 
         Log.i(GIST_TAG, "Messages timer started")
         observeUserMessagesJob = GlobalScope.launch {
@@ -196,7 +193,6 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
             } catch (e: CancellationException) {
                 // Co-routine was cancelled, cancel internal timer
                 Log.i(GIST_TAG, "Messages timer cancelled")
-                timer?.cancel()
             } catch (e: Exception) {
                 Log.e(GIST_TAG, "Failed to get user messages: ${e.message}", e)
             }
