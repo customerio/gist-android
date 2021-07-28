@@ -14,6 +14,7 @@ import build.gist.data.model.engine.EngineWebConfiguration
 import build.gist.presentation.GIST_TAG
 import com.google.gson.Gson
 import java.io.UnsupportedEncodingException
+import java.util.*
 
 internal class EngineWebView @JvmOverloads constructor(
     context: Context,
@@ -21,14 +22,27 @@ internal class EngineWebView @JvmOverloads constructor(
 ) : FrameLayout(context, attrs), EngineWebViewListener {
 
     var listener: EngineWebViewListener? = null
+    private var timer: Timer? = null
+    private var timerTask: TimerTask? = null
     private var webView: WebView = WebView(context)
 
     init {
         this.addView(webView)
+        timerTask = object : TimerTask() {
+            override fun run() {
+                if (timer != null) {
+                    Log.i(GIST_TAG, "Message global timeout, cancelling display.")
+                    listener?.error()
+                    stopTimer()
+                }
+            }
+        }
     }
 
     @SuppressLint("SetJavaScriptEnabled")
     fun setup(configuration: EngineWebConfiguration) {
+        timer = Timer()
+        timer?.schedule(timerTask, 5000)
         val jsonString = Gson().toJson(configuration)
         encodeToBase64(jsonString)?.let { options ->
             val messageUrl = "${BuildConfig.GIST_RENDERER}/index.html?options=${options}"
@@ -38,6 +52,7 @@ internal class EngineWebView @JvmOverloads constructor(
             webView.settings.allowFileAccess = true
             webView.settings.allowContentAccess = true
             webView.settings.domStorageEnabled = true
+
             webView.setBackgroundColor(Color.TRANSPARENT)
             webView.addJavascriptInterface(EngineWebViewInterface(this), "appInterface")
 
@@ -82,7 +97,9 @@ internal class EngineWebView @JvmOverloads constructor(
         return Base64.encodeToString(data, Base64.DEFAULT)
     }
 
+
     override fun bootstrapped() {
+        stopTimer()
         listener?.bootstrapped()
     }
 
@@ -108,5 +125,12 @@ internal class EngineWebView @JvmOverloads constructor(
 
     override fun error() {
         listener?.error()
+    }
+
+    private fun stopTimer() {
+        timerTask?.cancel()
+        timer?.cancel()
+        timer?.purge()
+        timer = null
     }
 }

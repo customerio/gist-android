@@ -54,50 +54,58 @@ class Queue: GistListener {
 
     internal fun fetchUserMessages() {
         GlobalScope.launch {
-            Log.i(GIST_TAG, "Fetching user messages")
-            val latestMessagesResponse = gistQueueService.fetchMessagesForUser(
-                UserMessages(
-                    GistSdk.getTopics()
+            try {
+                Log.i(GIST_TAG, "Fetching user messages")
+                val latestMessagesResponse = gistQueueService.fetchMessagesForUser(
+                    UserMessages(
+                        GistSdk.getTopics()
+                    )
                 )
-            )
-            if (latestMessagesResponse.code() == 204) {
-                // No content, don't do anything
-                Log.i(GIST_TAG, "No messages found for user")
-            } else if (latestMessagesResponse.isSuccessful) {
-                Log.i(GIST_TAG, "Found ${latestMessagesResponse.body()?.count()} messages for user")
-                run loop@{
-                    latestMessagesResponse.body()?.forEach foreach@{ message ->
-                        val gistProperties = GistMessageProperties.getGistProperties(message)
-                        gistProperties.routeRule?.let { routeRule ->
-                            try {
-                                if (!routeRule.toRegex().matches(GistSdk.currentRoute)) {
-                                    Log.i(
-                                        GIST_TAG,
-                                        "Message route: $routeRule does not match current route: ${GistSdk.currentRoute}"
-                                    )
+                if (latestMessagesResponse.code() == 204) {
+                    // No content, don't do anything
+                    Log.i(GIST_TAG, "No messages found for user")
+                } else if (latestMessagesResponse.isSuccessful) {
+                    Log.i(GIST_TAG, "Found ${latestMessagesResponse.body()?.count()} messages for user")
+                    run loop@{
+                        latestMessagesResponse.body()?.forEach foreach@{ message ->
+                            val gistProperties = GistMessageProperties.getGistProperties(message)
+                            gistProperties.routeRule?.let { routeRule ->
+                                try {
+                                    if (!routeRule.toRegex().matches(GistSdk.currentRoute)) {
+                                        Log.i(
+                                            GIST_TAG,
+                                            "Message route: $routeRule does not match current route: ${GistSdk.currentRoute}"
+                                        )
+                                        return@foreach
+                                    }
+                                } catch (e: PatternSyntaxException) {
+                                    Log.i(GIST_TAG, "Invalid route rule regex: $routeRule")
                                     return@foreach
                                 }
-                            } catch (e: PatternSyntaxException) {
-                                Log.i(GIST_TAG, "Invalid route rule regex: $routeRule")
-                                return@foreach
                             }
-                        }
-                        gistProperties.elementId?.let { elementId ->
-                            Log.i(
-                                GIST_TAG,
-                                "Embedding message from queue with queue id: ${message.queueId}"
-                            )
-                            GistSdk.handleEmbedMessage(message, elementId)
-                        } ?: run {
-                            Log.i(
-                                GIST_TAG,
-                                "Showing message from queue with queue id: ${message.queueId}"
-                            )
-                            GistSdk.showMessage(message)
-                            return@loop
+                            gistProperties.elementId?.let { elementId ->
+                                Log.i(
+                                    GIST_TAG,
+                                    "Embedding message from queue with queue id: ${message.queueId}"
+                                )
+                                GistSdk.handleEmbedMessage(message, elementId)
+                            } ?: run {
+                                Log.i(
+                                    GIST_TAG,
+                                    "Showing message from queue with queue id: ${message.queueId}"
+                                )
+                                GistSdk.showMessage(message)
+                                return@loop
+                            }
                         }
                     }
                 }
+            }
+            catch (e: Exception) {
+                Log.e(
+                    GIST_TAG,
+                    "Error fetching messages: ${e.message}"
+                )
             }
         }
     }
