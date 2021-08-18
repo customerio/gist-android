@@ -8,7 +8,7 @@ implementation 'build:gist:2.+'
 
 repositories {
     maven {
-        url 'http://maven.gist.build'
+        url 'https://maven.gist.build'
     }
 }
 ```
