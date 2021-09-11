@@ -28,21 +28,11 @@ internal class EngineWebView @JvmOverloads constructor(
 
     init {
         this.addView(webView)
-        timerTask = object : TimerTask() {
-            override fun run() {
-                if (timer != null) {
-                    Log.i(GIST_TAG, "Message global timeout, cancelling display.")
-                    listener?.error()
-                    stopTimer()
-                }
-            }
-        }
     }
 
     @SuppressLint("SetJavaScriptEnabled")
     fun setup(configuration: EngineWebConfiguration) {
-        timer = Timer()
-        timer?.schedule(timerTask, 5000)
+        setupTimeout()
         val jsonString = Gson().toJson(configuration)
         encodeToBase64(jsonString)?.let { options ->
             val messageUrl = "${BuildConfig.GIST_RENDERER}/index.html?options=${options}"
@@ -97,6 +87,19 @@ internal class EngineWebView @JvmOverloads constructor(
         return Base64.encodeToString(data, Base64.DEFAULT)
     }
 
+    private fun setupTimeout() {
+        timerTask = object : TimerTask() {
+            override fun run() {
+                if (timer != null) {
+                    Log.i(GIST_TAG, "Message global timeout, cancelling display.")
+                    listener?.error()
+                    stopTimer()
+                }
+            }
+        }
+        timer = Timer()
+        timer?.schedule(timerTask, 5000)
+    }
 
     override fun bootstrapped() {
         stopTimer()
