@@ -173,7 +173,13 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
     }
 
     fun clearListeners() {
-        listeners.clear()
+        listeners.forEach {
+            val listenerPackageName = it.javaClass.`package`.name
+            if (!listenerPackageName.toString().startsWith("build.gist.")) {
+                Log.d(GIST_TAG, "Removing listener $listenerPackageName")
+                listeners.remove(it)
+            }
+        }
     }
 
     // Gist Message Observer
