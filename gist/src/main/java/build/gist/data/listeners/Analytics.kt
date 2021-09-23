@@ -3,6 +3,7 @@ package build.gist.data.listeners
 import android.util.Log
 import build.gist.BuildConfig
 import build.gist.data.NetworkUtilities
+import build.gist.data.model.GistMessageProperties
 import build.gist.data.model.LogEvent
 import build.gist.data.model.Message
 import build.gist.data.repository.GistAnalyticsService
@@ -50,7 +51,8 @@ class Analytics {
                         ANALYTICS_EVENT_LOADED,
                         route,
                         message.instanceId,
-                        message.queueId
+                        message.queueId,
+                        GistMessageProperties.getGistProperties(message).campaignId
                     )
                 )
             }
@@ -71,7 +73,8 @@ class Analytics {
                         ANALYTICS_EVENT_DISMISSED,
                         route,
                         message.instanceId,
-                        message.queueId
+                        message.queueId,
+                        GistMessageProperties.getGistProperties(message).campaignId
                     )
                 )
             }
@@ -93,7 +96,8 @@ class Analytics {
                             ANALYTICS_EVENT_SYSTEM_ACTION,
                             route,
                             message.instanceId,
-                            message.queueId
+                            message.queueId,
+                            GistMessageProperties.getGistProperties(message).campaignId
                         )
                     )
                 } else {
@@ -102,7 +106,8 @@ class Analytics {
                             ANALYTICS_EVENT_ACTION,
                             route,
                             message.instanceId,
-                            message.queueId
+                            message.queueId,
+                            GistMessageProperties.getGistProperties(message).campaignId
                         )
                     )
                 }

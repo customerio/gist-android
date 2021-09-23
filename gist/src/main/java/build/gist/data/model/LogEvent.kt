@@ -5,5 +5,6 @@ data class LogEvent(
     val route: String,
     val instanceId: String,
     val queueId: String?,
+    val campaignId: String?,
     val platform: String = "android"
 )
