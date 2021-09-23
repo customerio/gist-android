@@ -10,6 +10,7 @@ enum class MessagePosition(val position: String) {
 data class GistProperties(
     val routeRule: String?,
     val elementId: String?,
+    val campaignId: String?,
     val position: MessagePosition
 )
 
@@ -25,6 +26,7 @@ class GistMessageProperties {
         fun getGistProperties(message: Message): GistProperties {
             var routeRule: String? = null
             var elementId: String? = null
+            var campaignId: String? = null
             var position: MessagePosition = MessagePosition.CENTER
 
             message.properties?.let { properties ->
@@ -33,6 +35,11 @@ class GistMessageProperties {
                         gistProperties["routeRuleAndroid"]?.let { rule ->
                             (rule as String).let { stringRule ->
                                 routeRule = stringRule
+                            }
+                        }
+                        gistProperties["campaignId"]?.let { id ->
+                            (id as String).let { stringId ->
+                                campaignId = stringId
                             }
                         }
                         gistProperties["elementId"]?.let { id ->
@@ -48,7 +55,7 @@ class GistMessageProperties {
                     }
                 }
             }
-            return GistProperties(routeRule = routeRule, elementId = elementId, position = position)
+            return GistProperties(routeRule = routeRule, elementId = elementId, campaignId = campaignId, position = position)
         }
     }
 }
