@@ -42,7 +42,7 @@ internal class EngineWebView @JvmOverloads constructor(
             webView.settings.allowFileAccess = true
             webView.settings.allowContentAccess = true
             webView.settings.domStorageEnabled = true
-
+            webView.settings.textZoom = 100
             webView.setBackgroundColor(Color.TRANSPARENT)
             webView.addJavascriptInterface(EngineWebViewInterface(this), "appInterface")
 
