@@ -1,2 +1,2 @@
 # Gist
--keep class build.gist.data.model.**  { *; }
+-keep class build.gist.**  { *; }
