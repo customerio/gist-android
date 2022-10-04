@@ -77,14 +77,14 @@ internal class EngineWebView @JvmOverloads constructor(
     }
 
     private fun encodeToBase64(text: String): String? {
-        var data: ByteArray?
+        val data: ByteArray?
         try {
             data = text.toByteArray(charset("UTF-8"))
         } catch (ex: UnsupportedEncodingException) {
             Log.e(GIST_TAG, "Unsupported encoding exception")
             return null
         }
-        return Base64.encodeToString(data, Base64.DEFAULT)
+        return Base64.encodeToString(data, Base64.URL_SAFE)
     }
 
     private fun setupTimeout() {
