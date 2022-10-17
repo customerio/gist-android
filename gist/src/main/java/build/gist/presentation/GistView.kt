@@ -100,6 +100,8 @@ class GistView @JvmOverloads constructor(
                             GistSdk.handleGistClosed(message)
                             val intent = Intent(Intent.ACTION_VIEW)
                             intent.data = Uri.parse(action)
+                            intent.flags =
+                                Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
                             startActivity(context, intent, null)
                         } catch (e: ActivityNotFoundException) {
                             Log.i(GIST_TAG, "System action not handled")
