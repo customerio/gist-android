@@ -221,8 +221,8 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         listeners.forEach { it.embedMessage(message, elementId) }
     }
 
-    internal fun handleGistAction(message: Message, currentRoute: String, action: String) {
-        listeners.forEach { it.onAction(message, currentRoute, action) }
+    internal fun handleGistAction(message: Message, currentRoute: String, action: String, name: String) {
+        listeners.forEach { it.onAction(message, currentRoute, action, name) }
     }
 
     internal fun getUserToken(): String? {
@@ -251,5 +251,5 @@ interface GistListener {
     fun onMessageShown(message: Message)
     fun onMessageDismissed(message: Message)
     fun onError(message: Message)
-    fun onAction(message: Message, currentRoute: String, action: String)
+    fun onAction(message: Message, currentRoute: String, action: String, name: String)
 }

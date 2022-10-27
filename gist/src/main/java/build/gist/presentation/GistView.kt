@@ -53,11 +53,11 @@ class GistView @JvmOverloads constructor(
         }
     }
 
-    override fun tap(action: String, system: Boolean) {
+    override fun tap(name: String, action: String, system: Boolean) {
         var shouldLogAction = true
         currentMessage?.let { message ->
             currentRoute?.let { route ->
-                GistSdk.handleGistAction(message = message, currentRoute = route, action = action)
+                GistSdk.handleGistAction(message = message, currentRoute = route, action = action, name = name)
                 when {
                     action.startsWith("gist://") -> {
                         val gistAction = URI(action)
