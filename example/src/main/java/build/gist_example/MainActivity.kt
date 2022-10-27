@@ -44,10 +44,10 @@ class MainActivity : AppCompatActivity(), GistViewListener {
                 Log.d(GIST_TAG, "Message Dismissed")
             }
 
-            override fun onAction(message: Message, currentRoute: String, action: String) {
+            override fun onAction(message: Message, currentRoute: String, action: String, name: String) {
                 Toast.makeText(
                     this@MainActivity,
-                    "Action received: $action from route $currentRoute on message ${message.instanceId}",
+                    "Action received: $action with name $name, from route $currentRoute on message ${message.instanceId}",
                     Toast.LENGTH_LONG
                 ).show()
             }

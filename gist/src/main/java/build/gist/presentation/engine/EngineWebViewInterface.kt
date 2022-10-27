@@ -45,8 +45,10 @@ class EngineWebViewInterface constructor(
                 }
                 "tap" -> {
                     (eventParameters["action"] as String).let { action ->
-                        (eventParameters["system"] as Boolean).let { system ->
-                            listener.tap(action = action, system = system)
+                        (eventParameters["name"] as String).let { name ->
+                            (eventParameters["system"] as Boolean).let { system ->
+                                listener.tap(name = name, action = action, system = system)
+                            }
                         }
                     }
                 }

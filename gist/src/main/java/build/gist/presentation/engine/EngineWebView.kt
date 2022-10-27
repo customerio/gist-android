@@ -106,8 +106,8 @@ internal class EngineWebView @JvmOverloads constructor(
         listener?.bootstrapped()
     }
 
-    override fun tap(action: String, system: Boolean) {
-        listener?.tap(action, system)
+    override fun tap(name: String, action: String, system: Boolean) {
+        listener?.tap(name, action, system)
     }
 
     override fun routeChanged(newRoute: String) {
