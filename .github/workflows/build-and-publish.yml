@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - '**'
-    tags:
-      - '**'
 
 jobs:
   publish:
@@ -14,10 +12,10 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v3
       with:
-          fetch-depth: 0
+        fetch-depth: 0
     - name: Push to Gitlab
       run: |
         git config user.name github-actions
         git config user.email github-actions@github.com
         git remote add ci https://AndroidCI:${{ secrets.GITLAB_TOKEN }}@gitlab.com/bourbonltd/gist-android.git
-        git push ci
+        git push ci --tags
