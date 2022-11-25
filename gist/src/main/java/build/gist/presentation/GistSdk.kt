@@ -189,6 +189,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         observeUserMessagesJob?.cancel()
 
         Log.i(GIST_TAG, "Messages timer started")
+        gistQueue.fetchUserMessages()
         observeUserMessagesJob = GlobalScope.launch {
             try {
                 // Poll for user messages
