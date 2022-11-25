@@ -17,5 +17,5 @@ jobs:
       run: |
         git config user.name github-actions
         git config user.email github-actions@github.com
-        git remote add ci https://AndroidCI:${{ secret.GITLAB_TOKEN }}@gitlab.com:bourbonltd/gist-android.git
+        git remote add ci https://AndroidCI:${{ secrets.GITLAB_TOKEN }}@gitlab.com:bourbonltd/gist-android.git
         git push ci
