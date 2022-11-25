@@ -1,0 +1,21 @@
+name: Publish for CI
+
+on:
+  push:
+    branches:
+      - '**'
+    tags:
+      - '**'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: Push to Gitlab
+      run: |
+        git config user.name github-actions
+        git config user.email github-actions@github.com
+        git remote add ci https://AndroidCI:${{ secret.GITLAB_TOKEN }}@gitlab.com:bourbonltd/gist-android.git
+        git push ci
