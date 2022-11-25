@@ -1,15 +1,15 @@
 apply plugin: 'maven-publish'
 
 def isReleaseBuild() {
-    return System.getenv("CI_COMMIT_TAG") != null
+    return System.getenv("GITHUB_REF_TYPE") == "tag"
 }
 
 def getVersionName() {
     if (isReleaseBuild()) {
-        return System.getenv("CI_COMMIT_TAG")
+        return System.getenv("GITHUB_REF_NAME")
     } else {
-        if (System.getenv("CI_COMMIT_BRANCH") != null) {
-            String branch = System.getenv("CI_COMMIT_BRANCH").replaceAll("[^a-zA-Z0-9]+","")
+        if (System.getenv("GITHUB_REF_NAME") != "develop") {
+            String branch = System.getenv("GITHUB_REF_NAME").replaceAll("[^a-zA-Z0-9]+","")
             return "${branch}-dev"
         } else {
             return "develop-dev"
@@ -55,14 +55,11 @@ publishing {
     }
     repositories {
         maven {
-            url "https://gitlab.com/api/v4/projects/17375052/packages/maven"
-            name "GitLab"
-            credentials(HttpHeaderCredentials) {
-                name = 'Job-Token'
-                value = System.getenv("CI_JOB_TOKEN")
-            }
-            authentication {
-                header(HttpHeaderAuthentication)
+            name = "GitHubPackages"
+            url = "https://maven.pkg.github.com/customerio/gist-android"
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")
+                password = System.getenv("GITHUB_TOKEN")
             }
         }
     }
