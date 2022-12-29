@@ -10,7 +10,7 @@ class Application : Application() {
 
         val gistSdk = GistSdk.getInstance()
 
-        // Initialize Gist SDK with organization ID
+        // Initialize Gist SDK with site ID
         gistSdk.init(this, "c6ff92b9-5607-4655-9265-f2588f7e3b58")
 
         // Set current user ID
