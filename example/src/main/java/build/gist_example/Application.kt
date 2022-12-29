@@ -15,7 +15,5 @@ class Application : Application() {
 
         // Set current user ID
         gistSdk.setUserToken("ABC123")
-
-        gistSdk.subscribeToTopic("announcements")
     }
 }

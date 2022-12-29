@@ -10,7 +10,6 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.ticker
 import kotlinx.coroutines.launch
-import build.gist.data.listeners.Analytics
 import build.gist.data.listeners.Queue
 import build.gist.data.model.Message
 import build.gist.data.model.MessagePosition
@@ -27,7 +26,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         application.getSharedPreferences(SHARED_PREFERENCES_NAME, MODE_PRIVATE)
     }
 
-    lateinit var organizationId: String
+    lateinit var siteId: String
     internal lateinit var application: Application
 
     private val listeners: MutableList<GistListener> = mutableListOf()
@@ -36,12 +35,10 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
 
     private var observeUserMessagesJob: Job? = null
     private var isInitialized = false
-    private var topics: List<String> = emptyList()
     private var gistQueue: Queue = Queue()
 
     private var gistModalManager: GistModalManager = GistModalManager()
     internal var currentRoute: String = ""
-    internal var gistAnalytics: Analytics = Analytics()
 
     @JvmStatic
     fun getInstance() = this
@@ -68,9 +65,9 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         }
     }
 
-    fun init(application: Application, organizationId: String) {
+    fun init(application: Application, siteId: String) {
         this.application = application
-        this.organizationId = organizationId
+        this.siteId = siteId
         this.isInitialized = true
 
         application.registerActivityLifecycleCallbacks(this)
@@ -90,30 +87,6 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
     fun setCurrentRoute(route: String) {
         currentRoute = route
         Log.i(GIST_TAG, "Current gist route set to: $currentRoute")
-    }
-
-    // Topics
-
-    fun subscribeToTopic(topic: String) {
-        var topicIndex = topics.indexOf(topic)
-        if (topicIndex == -1) {
-            topics = topics.plus(topic)
-        }
-    }
-
-    fun unsubscribeFromTopic(topic: String) {
-        var topicIndex = topics.indexOf(topic)
-        if (topicIndex > -1) {
-            topics = topics.drop(topicIndex)
-        }
-    }
-
-    fun getTopics(): List<String>{
-        return topics
-    }
-
-    fun clearTopics() {
-        topics = emptyList()
     }
 
     // User Token

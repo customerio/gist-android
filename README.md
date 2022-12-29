@@ -50,24 +50,6 @@ In your route handler add:
 GistSdk.getInstance().setCurrentRoute("user/profile")
 ```
 
-### Broadcasts
-Broadcasts enable you to receive messages based on topics the client is subscribed to.
-
-### Subscribing
-```kotlin
-GistSdk.getInstance().subscribeToTopic("announcements")
-```
-
-### Unsubscribe
-```kotlin
-GistSdk.getInstance().unsubscribeFromTopic("announcements")
-```
-
-### Clear All Topics
-```kotlin
-GistSdk.getInstance().clearTopics()
-```
-
 ## Manually Triggering In-App Messages
 Gist gives you the option to programmatically trigger in-app messaging flows within your app.
 
