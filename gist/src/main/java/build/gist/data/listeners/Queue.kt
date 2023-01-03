@@ -29,6 +29,7 @@ class Queue: GistListener {
                 GistSdk.getUserToken()?.let { userToken ->
                     val request: Request = chain.request().newBuilder()
                         .addHeader(NetworkUtilities.CIO_SITE_ID_HEADER, GistSdk.siteId)
+                        .addHeader(NetworkUtilities.CIO_DATACENTER_HEADER, GistSdk.dataCenter)
                         .addHeader(NetworkUtilities.USER_TOKEN_HEADER, userToken)
                         .build()
 
@@ -36,6 +37,7 @@ class Queue: GistListener {
                 } ?: run {
                     val request: Request = chain.request().newBuilder()
                         .addHeader(NetworkUtilities.CIO_SITE_ID_HEADER, GistSdk.siteId)
+                        .addHeader(NetworkUtilities.CIO_DATACENTER_HEADER, GistSdk.dataCenter)
                         .build()
 
                     chain.proceed(request)

@@ -27,6 +27,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
     }
 
     lateinit var siteId: String
+    lateinit var dataCenter: String
     internal lateinit var application: Application
 
     private val listeners: MutableList<GistListener> = mutableListOf()
@@ -65,9 +66,10 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         }
     }
 
-    fun init(application: Application, siteId: String) {
+    fun init(application: Application, siteId: String, dataCenter: String) {
         this.application = application
         this.siteId = siteId
+        this.dataCenter = dataCenter
         this.isInitialized = true
 
         application.registerActivityLifecycleCallbacks(this)

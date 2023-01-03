@@ -14,7 +14,6 @@ android {
 
         buildConfigField("String", "GIST_API_URL", '"https://api.gist.build"')
         buildConfigField("String", "GIST_QUEUE_API_URL", '"https://queue.api.gist.build"')
-        buildConfigField("String", "GIST_ANALYTICS_API_URL", '"https://analytics.api.gist.build"')
         buildConfigField("String", "GIST_RENDERER", '"https://renderer.gist.build/1.0"')
     }
     buildTypes {

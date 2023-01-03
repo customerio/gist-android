@@ -11,7 +11,7 @@ class Application : Application() {
         val gistSdk = GistSdk.getInstance()
 
         // Initialize Gist SDK with site ID
-        gistSdk.init(this, "c6ff92b9-5607-4655-9265-f2588f7e3b58")
+        gistSdk.init(this, "c6ff92b9", "eu")
 
         // Set current user ID
         gistSdk.setUserToken("ABC123")
