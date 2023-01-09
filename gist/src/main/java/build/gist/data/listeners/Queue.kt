@@ -2,6 +2,7 @@ package build.gist.data.listeners
 
 import android.util.Log
 import build.gist.BuildConfig
+import build.gist.GistEnvironment
 import build.gist.data.NetworkUtilities
 import build.gist.data.model.GistMessageProperties
 import build.gist.data.model.Message
@@ -46,7 +47,7 @@ class Queue: GistListener {
             .build()
 
         Retrofit.Builder()
-            .baseUrl(BuildConfig.GIST_QUEUE_API_URL)
+            .baseUrl(GistSdk.gistEnvironment.getGistQueueApiUrl())
             .addConverterFactory(GsonConverterFactory.create())
             .client(httpClient)
             .build()

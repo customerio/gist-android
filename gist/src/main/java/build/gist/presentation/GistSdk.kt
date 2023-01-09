@@ -5,6 +5,7 @@ import android.app.Application
 import android.content.Context.MODE_PRIVATE
 import android.os.Bundle
 import android.util.Log
+import build.gist.GistEnvironment
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
@@ -13,7 +14,6 @@ import kotlinx.coroutines.launch
 import build.gist.data.listeners.Queue
 import build.gist.data.model.Message
 import build.gist.data.model.MessagePosition
-import java.util.*
 
 const val GIST_TAG: String = "Gist"
 
@@ -28,6 +28,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
 
     lateinit var siteId: String
     lateinit var dataCenter: String
+    internal lateinit var gistEnvironment: GistEnvironment
     internal lateinit var application: Application
 
     private val listeners: MutableList<GistListener> = mutableListOf()
@@ -66,11 +67,12 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         }
     }
 
-    fun init(application: Application, siteId: String, dataCenter: String) {
+    fun init(application: Application, siteId: String, dataCenter: String, environment: GistEnvironment = GistEnvironment.PROD) {
         this.application = application
         this.siteId = siteId
         this.dataCenter = dataCenter
         this.isInitialized = true
+        this.gistEnvironment = environment
 
         application.registerActivityLifecycleCallbacks(this)
 
