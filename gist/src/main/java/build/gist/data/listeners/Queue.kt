@@ -2,10 +2,10 @@ package build.gist.data.listeners
 
 import android.util.Log
 import build.gist.BuildConfig
+import build.gist.GistEnvironment
 import build.gist.data.NetworkUtilities
 import build.gist.data.model.GistMessageProperties
 import build.gist.data.model.Message
-import build.gist.data.model.UserMessages
 import build.gist.data.repository.GistQueueService
 import build.gist.presentation.GIST_TAG
 import build.gist.presentation.GistListener
@@ -29,14 +29,16 @@ class Queue: GistListener {
             .addInterceptor { chain ->
                 GistSdk.getUserToken()?.let { userToken ->
                     val request: Request = chain.request().newBuilder()
-                        .addHeader(NetworkUtilities.ORGANIZATION_ID_HEADER, GistSdk.organizationId)
+                        .addHeader(NetworkUtilities.CIO_SITE_ID_HEADER, GistSdk.siteId)
+                        .addHeader(NetworkUtilities.CIO_DATACENTER_HEADER, GistSdk.dataCenter)
                         .addHeader(NetworkUtilities.USER_TOKEN_HEADER, userToken)
                         .build()
 
                     chain.proceed(request)
                 } ?: run {
                     val request: Request = chain.request().newBuilder()
-                        .addHeader(NetworkUtilities.ORGANIZATION_ID_HEADER, GistSdk.organizationId)
+                        .addHeader(NetworkUtilities.CIO_SITE_ID_HEADER, GistSdk.siteId)
+                        .addHeader(NetworkUtilities.CIO_DATACENTER_HEADER, GistSdk.dataCenter)
                         .build()
 
                     chain.proceed(request)
@@ -45,7 +47,7 @@ class Queue: GistListener {
             .build()
 
         Retrofit.Builder()
-            .baseUrl(BuildConfig.GIST_QUEUE_API_URL)
+            .baseUrl(GistSdk.gistEnvironment.getGistQueueApiUrl())
             .addConverterFactory(GsonConverterFactory.create())
             .client(httpClient)
             .build()
@@ -56,11 +58,7 @@ class Queue: GistListener {
         GlobalScope.launch {
             try {
                 Log.i(GIST_TAG, "Fetching user messages")
-                val latestMessagesResponse = gistQueueService.fetchMessagesForUser(
-                    UserMessages(
-                        GistSdk.getTopics()
-                    )
-                )
+                val latestMessagesResponse = gistQueueService.fetchMessagesForUser()
                 if (latestMessagesResponse.code() == 204) {
                     // No content, don't do anything
                     Log.i(GIST_TAG, "No messages found for user")

@@ -1,6 +1,7 @@
 package build.gist_example
 
 import android.app.Application
+import build.gist.GistEnvironment
 import build.gist.presentation.GistSdk
 
 class Application : Application() {
@@ -10,12 +11,10 @@ class Application : Application() {
 
         val gistSdk = GistSdk.getInstance()
 
-        // Initialize Gist SDK with organization ID
-        gistSdk.init(this, "c6ff92b9-5607-4655-9265-f2588f7e3b58")
+        // Initialize Gist SDK with site ID
+        gistSdk.init(this, "38180e5d34fcae872aa7", "us", GistEnvironment.DEV)
 
         // Set current user ID
         gistSdk.setUserToken("ABC123")
-
-        gistSdk.subscribeToTopic("announcements")
     }
 }

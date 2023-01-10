@@ -16,7 +16,7 @@ repositories {
 ## Setup
 Initialize Gist inside the application’s `onCreate` method. A shared Gist instance can be fetched using `GistSdk.getInstance()`.
 When using Kotlin, the shared instanced can also be accessed directly by calling the `GistSdk` object. 
-The Organization Id property can be retrieved from the Gist dashboard.
+The Site Id property can be retrieved from your Customer.io workspace settings.
 
 ```kotlin
 import android.app.Application
@@ -25,8 +25,8 @@ import build.gist.presentation.GistSdk
 class Application : Application() {
     override fun onCreate() {
         super.onCreate()
-        // Initialize Gist with organization id
-        GistSdk.getInstance().init(this, "your-organization-id")
+        // Initialize Gist with Customer IO site id
+        GistSdk.getInstance().init(this, "your-site-id")
     }
 }
 ```
@@ -48,24 +48,6 @@ In your route handler add:
 
 ```kotlin
 GistSdk.getInstance().setCurrentRoute("user/profile")
-```
-
-### Broadcasts
-Broadcasts enable you to receive messages based on topics the client is subscribed to.
-
-### Subscribing
-```kotlin
-GistSdk.getInstance().subscribeToTopic("announcements")
-```
-
-### Unsubscribe
-```kotlin
-GistSdk.getInstance().unsubscribeFromTopic("announcements")
-```
-
-### Clear All Topics
-```kotlin
-GistSdk.getInstance().clearTopics()
 ```
 
 ## Manually Triggering In-App Messages
