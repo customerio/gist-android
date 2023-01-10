@@ -1,7 +1,7 @@
 package build.gist.data.model.engine
 
 internal data class EngineWebConfiguration(
-    val organizationId: String,
+    val siteId: String,
     val messageId: String,
     val instanceId: String,
     val endpoint: String,

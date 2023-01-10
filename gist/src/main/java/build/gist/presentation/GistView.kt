@@ -1,6 +1,5 @@
 package build.gist.presentation
 
-import android.R.attr
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
@@ -43,10 +42,10 @@ class GistView @JvmOverloads constructor(
         currentMessage = message
         currentMessage?.let { message ->
             val engineWebConfiguration = EngineWebConfiguration(
-                organizationId = GistSdk.getInstance().organizationId,
+                siteId = GistSdk.getInstance().siteId,
                 messageId = message.messageId,
                 instanceId = message.instanceId,
-                endpoint = BuildConfig.GIST_API_URL,
+                endpoint = GistSdk.gistEnvironment.getGistApiUrl(),
                 properties = message.properties
             )
             engineWebView.setup(engineWebConfiguration)
@@ -95,7 +94,6 @@ class GistView @JvmOverloads constructor(
                     system -> {
                         try {
                             shouldLogAction = false
-                            GistSdk.gistAnalytics.actionPerformed(message = message, route = route, system = system)
                             Log.i(GIST_TAG, "Dismissing from system action: $action")
                             GistSdk.handleGistClosed(message)
                             val intent = Intent(Intent.ACTION_VIEW)
@@ -110,19 +108,9 @@ class GistView @JvmOverloads constructor(
                 }
                 if (shouldLogAction) {
                     Log.i(GIST_TAG, "Action selected: $action")
-                    GistSdk.gistAnalytics.actionPerformed(message = message, route = route, false)
                 }
             }
         }
-    }
-
-    override fun onDetachedFromWindow() {
-        currentMessage?.let { currentMessage ->
-            currentRoute?.let { currentRoute ->
-                GistSdk.gistAnalytics.messageDismissed(message = currentMessage, route = currentRoute)
-            }
-        }
-        super.onDetachedFromWindow()
     }
 
     override fun routeError(route: String) {
@@ -136,7 +124,6 @@ class GistView @JvmOverloads constructor(
         if (firstLoad) {
             engineWebView.alpha = 1.0f
             currentMessage?.let { message ->
-                GistSdk.gistAnalytics.messageLoaded(message = message, route = route)
                 GistSdk.handleGistLoaded(message)
             }
         }

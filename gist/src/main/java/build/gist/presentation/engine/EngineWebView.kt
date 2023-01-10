@@ -12,6 +12,7 @@ import android.widget.FrameLayout
 import build.gist.BuildConfig
 import build.gist.data.model.engine.EngineWebConfiguration
 import build.gist.presentation.GIST_TAG
+import build.gist.presentation.GistSdk
 import com.google.gson.Gson
 import java.io.UnsupportedEncodingException
 import java.util.*
@@ -35,7 +36,7 @@ internal class EngineWebView @JvmOverloads constructor(
         setupTimeout()
         val jsonString = Gson().toJson(configuration)
         encodeToBase64(jsonString)?.let { options ->
-            val messageUrl = "${BuildConfig.GIST_RENDERER}/index.html?options=${options}"
+            val messageUrl = "${GistSdk.gistEnvironment.getGistRendererUrl()}/index.html?options=${options}"
             Log.i(GIST_TAG, "Rendering message with URL: $messageUrl")
             webView.loadUrl(messageUrl)
             webView.settings.javaScriptEnabled = true
