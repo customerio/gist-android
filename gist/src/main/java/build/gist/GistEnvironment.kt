@@ -8,9 +8,9 @@ interface GistEnvironmentEndpoints {
 
 enum class GistEnvironment: GistEnvironmentEndpoints {
     DEV {
-        override fun getGistQueueApiUrl() = "https://queue.api.dev.gist.build"
+        override fun getGistQueueApiUrl() = "http://gist-queue-consumer-api.cloud.dev.gist.build"
         override fun getGistApiUrl() = "https://api.dev.gist.build"
-        override fun getGistRendererUrl() = "https://code.gist.build/renderer/0.0.20"
+        override fun getGistRendererUrl() = "https://renderer.gist.build/1.0"
     },
 
     LOCAL {
@@ -20,7 +20,7 @@ enum class GistEnvironment: GistEnvironmentEndpoints {
     },
 
     PROD {
-        override fun getGistQueueApiUrl() = "https://queue.api.gist.build"
+        override fun getGistQueueApiUrl() = "http://gist-queue-consumer-api.cloud.gist.build"
         override fun getGistApiUrl() = "https://api.gist.build"
         override fun getGistRendererUrl() = "https://renderer.gist.build/1.0"
     };
