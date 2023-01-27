@@ -11,7 +11,6 @@ import android.util.DisplayMetrics
 import android.util.Log
 import android.widget.FrameLayout
 import androidx.core.content.ContextCompat.startActivity
-import build.gist.BuildConfig
 import build.gist.data.model.Message
 import build.gist.data.model.engine.EngineWebConfiguration
 import build.gist.presentation.engine.EngineWebView
@@ -122,6 +121,7 @@ class GistView @JvmOverloads constructor(
     override fun routeLoaded(route: String) {
         currentRoute = route
         if (firstLoad) {
+            firstLoad = false
             engineWebView.alpha = 1.0f
             currentMessage?.let { message ->
                 GistSdk.handleGistLoaded(message)
