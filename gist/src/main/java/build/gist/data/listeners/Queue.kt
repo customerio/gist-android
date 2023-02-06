@@ -18,7 +18,7 @@ import java.util.regex.PatternSyntaxException
 
 class Queue: GistListener {
 
-    var localMessageQueue: MutableList<Message> = mutableListOf()
+    var localMessageStore: MutableList<Message> = mutableListOf()
 
     init {
         GistSdk.addListener(this)
@@ -54,8 +54,8 @@ class Queue: GistListener {
             .create(GistQueueService::class.java)
     }
 
-    internal fun checkLocalQueue() {
-        handleMessages(localMessageQueue)
+    internal fun checkLocalStore() {
+        handleMessages(localMessageStore)
     }
 
     internal fun fetchUserMessages() {
@@ -91,7 +91,7 @@ class Queue: GistListener {
                                 GIST_TAG,
                                 "Message route: $routeRule does not match current route: ${GistSdk.currentRoute}"
                             )
-                            addMessageToLocalQueue(message)
+                            addMessageToLocalStore(message)
                             return@foreach
                         }
                     } catch (e: PatternSyntaxException) {
@@ -122,7 +122,7 @@ class Queue: GistListener {
             try {
                 if (message.queueId != null) {
                     Log.i(GIST_TAG, "Logging view for user message: ${message.messageId}, with queue id: ${message.queueId}")
-                    removeMessageFromLocalQueue(message);
+                    removeMessageFromLocalStore(message);
                     gistQueueService.logUserMessageView(message.queueId)
                 } else {
                     Log.i(GIST_TAG, "Logging view for message: ${message.messageId}")
@@ -134,13 +134,13 @@ class Queue: GistListener {
         }
     }
 
-    private fun addMessageToLocalQueue(message: Message) {
-        val localMessage = localMessageQueue.find { localMessage -> localMessage.queueId == message.queueId }
-        if (localMessage == null) { localMessageQueue.add(message) }
+    private fun addMessageToLocalStore(message: Message) {
+        val localMessage = localMessageStore.find { localMessage -> localMessage.queueId == message.queueId }
+        if (localMessage == null) { localMessageStore.add(message) }
     }
 
-    private fun removeMessageFromLocalQueue(message: Message) {
-        localMessageQueue = localMessageQueue.filter { localMessage -> localMessage.queueId != message.queueId } as MutableList<Message>
+    private fun removeMessageFromLocalStore(message: Message) {
+        localMessageStore = localMessageStore.filter { localMessage -> localMessage.queueId != message.queueId } as MutableList<Message>
     }
 
     override fun onMessageShown(message: Message) {

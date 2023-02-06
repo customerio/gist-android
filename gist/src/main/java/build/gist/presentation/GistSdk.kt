@@ -90,7 +90,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
 
     fun setCurrentRoute(route: String) {
         currentRoute = route
-        gistQueue.checkLocalQueue()
+        gistQueue.checkLocalStore()
         Log.i(GIST_TAG, "Current gist route set to: $currentRoute")
     }
 
