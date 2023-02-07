@@ -18,7 +18,7 @@ import java.util.regex.PatternSyntaxException
 
 class Queue: GistListener {
 
-    var localMessageStore: MutableList<Message> = mutableListOf()
+    private var localMessageStore: MutableList<Message> = mutableListOf()
 
     init {
         GistSdk.addListener(this)
@@ -54,7 +54,7 @@ class Queue: GistListener {
             .create(GistQueueService::class.java)
     }
 
-    internal fun checkLocalStore() {
+    internal fun fetchUserMessagesFromLocalStore() {
         handleMessages(localMessageStore)
     }
 
@@ -140,7 +140,7 @@ class Queue: GistListener {
     }
 
     private fun removeMessageFromLocalStore(message: Message) {
-        localMessageStore = localMessageStore.filter { localMessage -> localMessage.queueId != message.queueId } as MutableList<Message>
+        localMessageStore.removeAll { it.queueId == message.queueId }
     }
 
     override fun onMessageShown(message: Message) {
