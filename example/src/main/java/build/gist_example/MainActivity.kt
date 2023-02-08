@@ -73,7 +73,7 @@ class MainActivity : AppCompatActivity(), GistViewListener {
         }
 
         binding.changeRouteButton.setOnClickListener {
-            gistSdk.setCurrentRoute("Test")
+            gistSdk.setCurrentRoute("test")
         }
 
         binding.gistView.setup(message = Message("version-2-0"))
