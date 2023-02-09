@@ -90,6 +90,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
 
     fun setCurrentRoute(route: String) {
         currentRoute = route
+        gistQueue.fetchUserMessagesFromLocalStore()
         Log.i(GIST_TAG, "Current gist route set to: $currentRoute")
     }
 
@@ -97,6 +98,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
 
     fun clearUserToken() {
         ensureInitialized()
+        gistQueue.clearUserMessagesFromLocalStore()
         // Remove user token from preferences & cancel job / timer.
         sharedPreferences.edit().remove(SHARED_PREFERENCES_USER_TOKEN_KEY).apply()
         observeUserMessagesJob?.cancel()
