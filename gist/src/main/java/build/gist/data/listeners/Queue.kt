@@ -58,6 +58,10 @@ class Queue: GistListener {
         handleMessages(localMessageStore)
     }
 
+    internal fun clearUserMessagesFromLocalStore() {
+        localMessageStore.clear()
+    }
+
     internal fun fetchUserMessages() {
         GlobalScope.launch {
             try {
