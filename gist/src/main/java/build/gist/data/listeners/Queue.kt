@@ -1,8 +1,6 @@
 package build.gist.data.listeners
 
 import android.util.Log
-import build.gist.BuildConfig
-import build.gist.GistEnvironment
 import build.gist.data.NetworkUtilities
 import build.gist.data.model.GistMessageProperties
 import build.gist.data.model.Message
@@ -19,6 +17,8 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.regex.PatternSyntaxException
 
 class Queue: GistListener {
+
+    private var localMessageStore: MutableList<Message> = mutableListOf()
 
     init {
         GistSdk.addListener(this)
@@ -54,6 +54,14 @@ class Queue: GistListener {
             .create(GistQueueService::class.java)
     }
 
+    internal fun fetchUserMessagesFromLocalStore() {
+        handleMessages(localMessageStore)
+    }
+
+    internal fun clearUserMessagesFromLocalStore() {
+        localMessageStore.clear()
+    }
+
     internal fun fetchUserMessages() {
         GlobalScope.launch {
             try {
@@ -64,39 +72,7 @@ class Queue: GistListener {
                     Log.i(GIST_TAG, "No messages found for user")
                 } else if (latestMessagesResponse.isSuccessful) {
                     Log.i(GIST_TAG, "Found ${latestMessagesResponse.body()?.count()} messages for user")
-                    run loop@{
-                        latestMessagesResponse.body()?.forEach foreach@{ message ->
-                            val gistProperties = GistMessageProperties.getGistProperties(message)
-                            gistProperties.routeRule?.let { routeRule ->
-                                try {
-                                    if (!routeRule.toRegex().matches(GistSdk.currentRoute)) {
-                                        Log.i(
-                                            GIST_TAG,
-                                            "Message route: $routeRule does not match current route: ${GistSdk.currentRoute}"
-                                        )
-                                        return@foreach
-                                    }
-                                } catch (e: PatternSyntaxException) {
-                                    Log.i(GIST_TAG, "Invalid route rule regex: $routeRule")
-                                    return@foreach
-                                }
-                            }
-                            gistProperties.elementId?.let { elementId ->
-                                Log.i(
-                                    GIST_TAG,
-                                    "Embedding message from queue with queue id: ${message.queueId}"
-                                )
-                                GistSdk.handleEmbedMessage(message, elementId)
-                            } ?: run {
-                                Log.i(
-                                    GIST_TAG,
-                                    "Showing message from queue with queue id: ${message.queueId}"
-                                )
-                                GistSdk.showMessage(message)
-                                return@loop
-                            }
-                        }
-                    }
+                    latestMessagesResponse.body()?.let { handleMessages(it) }
                 }
             }
             catch (e: Exception) {
@@ -108,11 +84,49 @@ class Queue: GistListener {
         }
     }
 
+    private fun handleMessages(messages: List<Message>) {
+        run loop@{
+            messages.forEach foreach@{ message ->
+                val gistProperties = GistMessageProperties.getGistProperties(message)
+                gistProperties.routeRule?.let { routeRule ->
+                    try {
+                        if (!routeRule.toRegex().matches(GistSdk.currentRoute)) {
+                            Log.i(
+                                GIST_TAG,
+                                "Message route: $routeRule does not match current route: ${GistSdk.currentRoute}"
+                            )
+                            addMessageToLocalStore(message)
+                            return@foreach
+                        }
+                    } catch (e: PatternSyntaxException) {
+                        Log.i(GIST_TAG, "Invalid route rule regex: $routeRule")
+                        return@foreach
+                    }
+                }
+                gistProperties.elementId?.let { elementId ->
+                    Log.i(
+                        GIST_TAG,
+                        "Embedding message from queue with queue id: ${message.queueId}"
+                    )
+                    GistSdk.handleEmbedMessage(message, elementId)
+                } ?: run {
+                    Log.i(
+                        GIST_TAG,
+                        "Showing message from queue with queue id: ${message.queueId}"
+                    )
+                    GistSdk.showMessage(message)
+                    return@loop
+                }
+            }
+        }
+    }
+
     private fun logView(message: Message) {
         GlobalScope.launch {
             try {
                 if (message.queueId != null) {
                     Log.i(GIST_TAG, "Logging view for user message: ${message.messageId}, with queue id: ${message.queueId}")
+                    removeMessageFromLocalStore(message);
                     gistQueueService.logUserMessageView(message.queueId)
                 } else {
                     Log.i(GIST_TAG, "Logging view for message: ${message.messageId}")
@@ -122,6 +136,15 @@ class Queue: GistListener {
                 Log.e(GIST_TAG, "Failed to log message view: ${e.message}", e)
             }
         }
+    }
+
+    private fun addMessageToLocalStore(message: Message) {
+        val localMessage = localMessageStore.find { localMessage -> localMessage.queueId == message.queueId }
+        if (localMessage == null) { localMessageStore.add(message) }
+    }
+
+    private fun removeMessageFromLocalStore(message: Message) {
+        localMessageStore.removeAll { it.queueId == message.queueId }
     }
 
     override fun onMessageShown(message: Message) {
