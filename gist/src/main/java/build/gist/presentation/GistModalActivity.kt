@@ -15,6 +15,7 @@ import build.gist.data.model.GistMessageProperties
 import build.gist.data.model.Message
 import build.gist.data.model.MessagePosition
 import build.gist.databinding.ActivityGistBinding
+import build.gist.utilities.ElapsedTimer
 import com.google.gson.Gson
 
 const val GIST_MESSAGE_INTENT: String = "GIST_MESSAGE"
@@ -24,6 +25,7 @@ class GistModalActivity : AppCompatActivity(), GistListener, GistViewListener {
     private lateinit var binding: ActivityGistBinding
     private var currentMessage: Message? = null
     private var messagePosition: MessagePosition = MessagePosition.CENTER
+    private var elapsedTimer: ElapsedTimer = ElapsedTimer()
 
     companion object {
         fun newIntent(context: Context): Intent {
@@ -42,6 +44,7 @@ class GistModalActivity : AppCompatActivity(), GistListener, GistViewListener {
         Gson().fromJson(messageStr, Message::class.java)?.let { messageObj ->
             currentMessage = messageObj
             currentMessage?.let { message ->
+                elapsedTimer.start("Displaying modal for message: ${message.messageId}")
                 binding.gistView.listener = this
                 binding.gistView.setup(message)
                 messagePosition = if (modalPositionStr == null) {
@@ -103,6 +106,9 @@ class GistModalActivity : AppCompatActivity(), GistListener, GistViewListener {
             }
             animation.setTarget(binding.modalGistViewLayout)
             animation.start()
+            animation.doOnEnd {
+                elapsedTimer.end()
+            }
         }
     }
 
