@@ -13,6 +13,7 @@ import build.gist.BuildConfig
 import build.gist.data.model.engine.EngineWebConfiguration
 import build.gist.presentation.GIST_TAG
 import build.gist.presentation.GistSdk
+import build.gist.utilities.ElapsedTimer
 import com.google.gson.Gson
 import java.io.UnsupportedEncodingException
 import java.util.*
@@ -26,6 +27,7 @@ internal class EngineWebView @JvmOverloads constructor(
     private var timer: Timer? = null
     private var timerTask: TimerTask? = null
     private var webView: WebView = WebView(context)
+    private var elapsedTimer: ElapsedTimer = ElapsedTimer()
 
     init {
         this.addView(webView)
@@ -36,6 +38,7 @@ internal class EngineWebView @JvmOverloads constructor(
         setupTimeout()
         val jsonString = Gson().toJson(configuration)
         encodeToBase64(jsonString)?.let { options ->
+            elapsedTimer.start("Engine render for message: ${configuration.messageId}")
             val messageUrl = "${GistSdk.gistEnvironment.getGistRendererUrl()}/index.html?options=${options}"
             Log.i(GIST_TAG, "Rendering message with URL: $messageUrl")
             webView.loadUrl(messageUrl)
@@ -112,6 +115,7 @@ internal class EngineWebView @JvmOverloads constructor(
     }
 
     override fun routeChanged(newRoute: String) {
+        elapsedTimer.start("Engine render for message: $newRoute")
         listener?.routeChanged(newRoute)
     }
 
@@ -120,6 +124,7 @@ internal class EngineWebView @JvmOverloads constructor(
     }
 
     override fun routeLoaded(route: String) {
+        elapsedTimer.end()
         listener?.routeLoaded(route)
     }
 
