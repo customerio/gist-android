@@ -14,6 +14,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.Base64
 import java.util.regex.PatternSyntaxException
 
 class Queue: GistListener {
@@ -31,7 +32,7 @@ class Queue: GistListener {
                     val request: Request = chain.request().newBuilder()
                         .addHeader(NetworkUtilities.CIO_SITE_ID_HEADER, GistSdk.siteId)
                         .addHeader(NetworkUtilities.CIO_DATACENTER_HEADER, GistSdk.dataCenter)
-                        .addHeader(NetworkUtilities.USER_TOKEN_HEADER, btoa(userToken))
+                        .addHeader(NetworkUtilities.USER_TOKEN_HEADER, Base64.getEncoder().encodeToString(userToken.toByteArray()))
                         .build()
 
                     chain.proceed(request)
@@ -126,7 +127,7 @@ class Queue: GistListener {
             try {
                 if (message.queueId != null) {
                     Log.i(GIST_TAG, "Logging view for user message: ${message.messageId}, with queue id: ${message.queueId}")
-                    removeMessageFromLocalStore(message);
+                    removeMessageFromLocalStore(message)
                     gistQueueService.logUserMessageView(message.queueId)
                 } else {
                     Log.i(GIST_TAG, "Logging view for message: ${message.messageId}")
