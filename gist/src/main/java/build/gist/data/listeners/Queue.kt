@@ -149,12 +149,20 @@ class Queue: GistListener {
     }
 
     override fun onMessageShown(message: Message) {
-        logView(message)
+        val gistProperties = GistMessageProperties.getGistProperties(message)
+        if (gistProperties.persistent != true) {
+            logView(message)
+        }
     }
 
     override fun embedMessage(message: Message, elementId: String) {}
 
-    override fun onMessageDismissed(message: Message) {}
+    override fun onMessageDismissed(message: Message) {
+        val gistProperties = GistMessageProperties.getGistProperties(message)
+        if (gistProperties.persistent == true) {
+            logView(message)
+        }
+    }
 
     override fun onError(message: Message) {}
 
