@@ -143,6 +143,7 @@ class GistView @JvmOverloads constructor(
     }
 
     override fun bootstrapped() {
+        // Cleaning after engine web is bootstrapped and all assets downloaded.
         currentMessage?.let { message ->
             if (message.messageId == "") {
                 engineWebView = null

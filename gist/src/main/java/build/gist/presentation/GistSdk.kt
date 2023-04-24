@@ -87,7 +87,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
             }
         }
 
-        // Initialising Gist web with an empty message to fetch all required assets.
+        // Initialising Gist web with an empty message to fetch fonts and other assets.
         GistView(this.application, null).setup(Message(messageId = ""))
     }
 
