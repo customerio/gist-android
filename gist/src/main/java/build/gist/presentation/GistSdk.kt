@@ -86,6 +86,9 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
                 Log.e(GIST_TAG, e.message, e)
             }
         }
+
+        // Initialising Gist web with an empty message to fetch all required assets.
+        GistView(this.application, null).setup(Message(messageId = ""))
     }
 
     fun setCurrentRoute(route: String) {
