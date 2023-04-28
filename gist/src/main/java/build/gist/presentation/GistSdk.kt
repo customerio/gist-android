@@ -12,6 +12,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.ticker
 import kotlinx.coroutines.launch
 import build.gist.data.listeners.Queue
+import build.gist.data.model.GistMessageProperties
 import build.gist.data.model.Message
 import build.gist.data.model.MessagePosition
 
@@ -185,6 +186,14 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
             } catch (e: Exception) {
                 Log.e(GIST_TAG, "Failed to get user messages: ${e.message}", e)
             }
+        }
+    }
+
+    internal fun removePersistentMessage(message: Message) {
+        val gistProperties = GistMessageProperties.getGistProperties(message)
+        if (gistProperties.persistent == true) {
+            Log.i(GIST_TAG, "Persistent message dismissed, logging view")
+            gistQueue.logView(message)
         }
     }
 

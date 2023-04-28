@@ -122,7 +122,7 @@ class Queue: GistListener {
         }
     }
 
-    private fun logView(message: Message) {
+    internal fun logView(message: Message) {
         GlobalScope.launch {
             try {
                 if (message.queueId != null) {
@@ -152,16 +152,14 @@ class Queue: GistListener {
         val gistProperties = GistMessageProperties.getGistProperties(message)
         if (gistProperties.persistent != true) {
             logView(message)
+        } else {
+            Log.i(GIST_TAG, "Persistent message shown, skipping logging view")
         }
     }
 
     override fun embedMessage(message: Message, elementId: String) {}
 
     override fun onMessageDismissed(message: Message) {
-        val gistProperties = GistMessageProperties.getGistProperties(message)
-        if (gistProperties.persistent == true) {
-            logView(message)
-        }
     }
 
     override fun onError(message: Message) {}

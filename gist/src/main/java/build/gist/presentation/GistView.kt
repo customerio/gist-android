@@ -70,6 +70,7 @@ class GistView @JvmOverloads constructor(
                                 shouldLogAction = false
                                 Log.i(GIST_TAG, "Dismissing from action: $action")
                                 GistSdk.handleGistClosed(message)
+                                GistSdk.removePersistentMessage(message)
                             }
                             "loadPage" -> {
                                 val url = urlQuery.getValue("url")
@@ -79,6 +80,8 @@ class GistView @JvmOverloads constructor(
                             }
                             "showMessage" -> {
                                 GistSdk.handleGistClosed(message)
+                                // BERNARD: not sure about this one. What does this case represent?
+                                GistSdk.removePersistentMessage(message)
                                 val messageId = urlQuery.getValue("messageId")
                                 val propertiesBase64 = urlQuery.getValue("properties")
                                 val parameterBinary = Base64.decode(propertiesBase64, Base64.DEFAULT)
