@@ -25,15 +25,17 @@ class GistView @JvmOverloads constructor(
     attrs: AttributeSet? = null
 ) : FrameLayout(context, attrs), EngineWebViewListener {
 
-    private var engineWebView: EngineWebView = EngineWebView(context)
+    private var engineWebView: EngineWebView? = EngineWebView(context)
     private var currentMessage: Message? = null
     private var currentRoute: String? = null
     private var firstLoad: Boolean = true
     var listener: GistViewListener? = null
 
     init {
-        engineWebView.alpha = 0.0f
-        engineWebView.listener = this
+        engineWebView?.let { engineWebView ->
+            engineWebView.alpha = 0.0f
+            engineWebView.listener = this
+        }
         this.addView(engineWebView)
     }
 
@@ -42,12 +44,15 @@ class GistView @JvmOverloads constructor(
         currentMessage?.let { message ->
             val engineWebConfiguration = EngineWebConfiguration(
                 siteId = GistSdk.getInstance().siteId,
+                dataCenter = GistSdk.getInstance().dataCenter,
                 messageId = message.messageId,
                 instanceId = message.instanceId,
-                endpoint = GistSdk.gistEnvironment.getGistApiUrl(),
+                endpoint = GistSdk.gistEnvironment.getEngineApiUrl(),
                 properties = message.properties
             )
-            engineWebView.setup(engineWebConfiguration)
+            engineWebView?.let { engineWebView ->
+                engineWebView.setup(engineWebConfiguration)
+            }
         }
     }
 
@@ -122,7 +127,9 @@ class GistView @JvmOverloads constructor(
         currentRoute = route
         if (firstLoad) {
             firstLoad = false
-            engineWebView.alpha = 1.0f
+            engineWebView?.let { engineWebView ->
+                engineWebView.alpha = 1.0f
+            }
             currentMessage?.let { message ->
                 GistSdk.handleGistLoaded(message)
             }
@@ -135,7 +142,16 @@ class GistView @JvmOverloads constructor(
         }
     }
 
-    override fun bootstrapped() {}
+    override fun bootstrapped() {
+        // Cleaning after engine web is bootstrapped and all assets downloaded.
+        currentMessage?.let { message ->
+            if (message.messageId == "") {
+                engineWebView = null
+                currentMessage = null
+                listener = null
+            }
+        }
+    }
     override fun routeChanged(newRoute: String) {}
     override fun sizeChanged(width: Double, height: Double) {
         listener?.onGistViewSizeChanged(getSizeBasedOnDPI(width.toInt()), getSizeBasedOnDPI(height.toInt()))
