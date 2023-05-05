@@ -12,7 +12,7 @@ data class GistProperties(
     val elementId: String?,
     val campaignId: String?,
     val position: MessagePosition,
-    val persistent: Boolean?
+    val persistent: Boolean
 )
 
 data class Message(
@@ -29,7 +29,7 @@ class GistMessageProperties {
             var elementId: String? = null
             var campaignId: String? = null
             var position: MessagePosition = MessagePosition.CENTER
-            var persistent: Boolean? = null
+            var persistent = false
 
             message.properties?.let { properties ->
                 properties["gist"]?.let { gistProperties ->

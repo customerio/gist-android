@@ -191,7 +191,7 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
 
     internal fun removePersistentMessage(message: Message) {
         val gistProperties = GistMessageProperties.getGistProperties(message)
-        if (gistProperties.persistent == true) {
+        if (gistProperties.persistent) {
             Log.i(GIST_TAG, "Persistent message dismissed, logging view")
             gistQueue.logView(message)
         }
