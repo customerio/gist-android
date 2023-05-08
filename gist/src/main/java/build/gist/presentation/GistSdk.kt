@@ -189,12 +189,13 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         }
     }
 
-    internal fun removePersistentMessage(message: Message) {
+    internal fun dismissPersistentMessage(message: Message) {
         val gistProperties = GistMessageProperties.getGistProperties(message)
         if (gistProperties.persistent) {
             Log.i(GIST_TAG, "Persistent message dismissed, logging view")
             gistQueue.logView(message)
         }
+        handleGistClosed(message)
     }
 
     internal fun handleGistLoaded(message: Message) {

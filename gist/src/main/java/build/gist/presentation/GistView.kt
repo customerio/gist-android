@@ -70,8 +70,7 @@ class GistView @JvmOverloads constructor(
                             "close" -> {
                                 shouldLogAction = false
                                 Log.i(GIST_TAG, "Dismissing from action: $action")
-                                GistSdk.removePersistentMessage(message)
-                                GistSdk.handleGistClosed(message)
+                                GistSdk.dismissPersistentMessage(message)
                             }
                             "loadPage" -> {
                                 val url = urlQuery.getValue("url")
