@@ -72,6 +72,8 @@ class Queue : GistListener {
             try {
                 Log.i(GIST_TAG, "Fetching user messages")
                 val latestMessagesResponse = gistQueueService.fetchMessagesForUser()
+                // To prevent us from showing expired / revoked messages, clear user messages from local queue.
+                clearUserMessagesFromLocalStore()
                 if (latestMessagesResponse.code() == 204) {
                     // No content, don't do anything
                     Log.i(GIST_TAG, "No messages found for user")
@@ -128,7 +130,7 @@ class Queue : GistListener {
         }
     }
 
-    private fun logView(message: Message) {
+    internal fun logView(message: Message) {
         GlobalScope.launch {
             try {
                 if (message.queueId != null) {
@@ -161,7 +163,12 @@ class Queue : GistListener {
     }
 
     override fun onMessageShown(message: Message) {
-        logView(message)
+        val gistProperties = GistMessageProperties.getGistProperties(message)
+        if (gistProperties.persistent) {
+            Log.i(GIST_TAG, "Persistent message shown: ${message.messageId}, skipping logging view")
+        } else {
+            logView(message)
+        }
     }
 
     override fun embedMessage(message: Message, elementId: String) {}

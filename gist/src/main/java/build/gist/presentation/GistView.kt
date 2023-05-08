@@ -11,6 +11,7 @@ import android.util.DisplayMetrics
 import android.util.Log
 import android.widget.FrameLayout
 import androidx.core.content.ContextCompat.startActivity
+import build.gist.data.model.GistMessageProperties
 import build.gist.data.model.Message
 import build.gist.data.model.engine.EngineWebConfiguration
 import build.gist.presentation.engine.EngineWebView
@@ -69,7 +70,7 @@ class GistView @JvmOverloads constructor(
                             "close" -> {
                                 shouldLogAction = false
                                 Log.i(GIST_TAG, "Dismissing from action: $action")
-                                GistSdk.handleGistClosed(message)
+                                GistSdk.dismissPersistentMessage(message)
                             }
                             "loadPage" -> {
                                 val url = urlQuery.getValue("url")
@@ -98,8 +99,13 @@ class GistView @JvmOverloads constructor(
                     system -> {
                         try {
                             shouldLogAction = false
-                            Log.i(GIST_TAG, "Dismissing from system action: $action")
-                            GistSdk.handleGistClosed(message)
+                            val gistProperties = GistMessageProperties.getGistProperties(message)
+                            if (gistProperties.persistent) {
+                                Log.i(GIST_TAG, "Message is persistent, not dismissing.")
+                            } else {
+                                Log.i(GIST_TAG, "Dismissing from system action: $action")
+                                GistSdk.handleGistClosed(message)
+                            }
                             val intent = Intent(Intent.ACTION_VIEW)
                             intent.data = Uri.parse(action)
                             intent.flags =
