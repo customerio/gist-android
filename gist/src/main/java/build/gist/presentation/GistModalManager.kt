@@ -32,7 +32,8 @@ internal class GistModalManager: GistListener {
 
     internal fun dismissActiveMessage() {
         currentMessage?.let { message ->
-            GistSdk.handleGistClosed(message = message)
+            GistSdk.removePersistentMessage(message)
+            GistSdk.handleGistClosed(message)
         } ?: run {
             Log.i(GIST_TAG, "No modal messages to dismiss.")
         }

@@ -153,7 +153,7 @@ class Queue: GistListener {
     override fun onMessageShown(message: Message) {
         val gistProperties = GistMessageProperties.getGistProperties(message)
         if (gistProperties.persistent) {
-            Log.i(GIST_TAG, "Persistent message shown, skipping logging view")
+            Log.i(GIST_TAG, "Persistent message shown: ${message.messageId}, skipping logging view")
         } else {
             logView(message)
         }
