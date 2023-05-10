@@ -99,13 +99,8 @@ class GistView @JvmOverloads constructor(
                     system -> {
                         try {
                             shouldLogAction = false
-                            val gistProperties = GistMessageProperties.getGistProperties(message)
-                            if (gistProperties.persistent) {
-                                Log.i(GIST_TAG, "Message is persistent, not dismissing.")
-                            } else {
-                                Log.i(GIST_TAG, "Dismissing from system action: $action")
-                                GistSdk.handleGistClosed(message)
-                            }
+                            Log.i(GIST_TAG, "Dismissing from system action: $action")
+                            GistSdk.handleGistClosed(message)
                             val intent = Intent(Intent.ACTION_VIEW)
                             intent.data = Uri.parse(action)
                             intent.flags =
