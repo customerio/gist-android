@@ -51,9 +51,7 @@ class GistView @JvmOverloads constructor(
                 endpoint = GistSdk.gistEnvironment.getEngineApiUrl(),
                 properties = message.properties
             )
-            engineWebView?.let { engineWebView ->
-                engineWebView.setup(engineWebConfiguration)
-            }
+            engineWebView?.setup(engineWebConfiguration)
         }
     }
 
