@@ -4,16 +4,18 @@ import android.app.Activity
 import android.app.Application
 import android.content.Context.MODE_PRIVATE
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import build.gist.GistEnvironment
+import build.gist.data.listeners.Queue
+import build.gist.data.model.Message
+import build.gist.data.model.MessagePosition
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.ticker
 import kotlinx.coroutines.launch
-import build.gist.data.listeners.Queue
-import build.gist.data.model.Message
-import build.gist.data.model.MessagePosition
 
 const val GIST_TAG: String = "Gist"
 
@@ -67,7 +69,12 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         }
     }
 
-    fun init(application: Application, siteId: String, dataCenter: String, environment: GistEnvironment = GistEnvironment.PROD) {
+    fun init(
+        application: Application,
+        siteId: String,
+        dataCenter: String,
+        environment: GistEnvironment = GistEnvironment.PROD
+    ) {
         this.application = application
         this.siteId = siteId
         this.dataCenter = dataCenter
@@ -87,8 +94,14 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
             }
         }
 
-        // Initialising Gist web with an empty message to fetch fonts and other assets.
-        GistView(this.application, null).setup(Message(messageId = ""))
+        // Create a Handler for the main (UI) thread
+        val mainHandler = Handler(Looper.getMainLooper())
+
+        // Use the Handler to run code on the main thread
+        mainHandler.post {
+            // Initialize GistView on the main thread with an empty message to fetch assets
+            GistView(GistSdk.application, null).setup(Message(messageId = ""))
+        }
     }
 
     fun setCurrentRoute(route: String) {
@@ -204,7 +217,12 @@ object GistSdk : Application.ActivityLifecycleCallbacks {
         listeners.forEach { it.embedMessage(message, elementId) }
     }
 
-    internal fun handleGistAction(message: Message, currentRoute: String, action: String, name: String) {
+    internal fun handleGistAction(
+        message: Message,
+        currentRoute: String,
+        action: String,
+        name: String
+    ) {
         listeners.forEach { it.onAction(message, currentRoute, action, name) }
     }
 
