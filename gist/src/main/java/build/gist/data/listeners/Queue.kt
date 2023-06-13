@@ -72,6 +72,9 @@ class Queue : GistListener {
             try {
                 Log.i(GIST_TAG, "Fetching user messages")
                 val latestMessagesResponse = gistQueueService.fetchMessagesForUser()
+                // If there's no change (304), move on.
+                if (latestMessagesResponse.code() == 304) { return@launch }
+
                 // To prevent us from showing expired / revoked messages, clear user messages from local queue.
                 clearUserMessagesFromLocalStore()
                 if (latestMessagesResponse.code() == 204) {
