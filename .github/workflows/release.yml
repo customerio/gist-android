@@ -1,0 +1,15 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number for the release (e.g., 1.14.1)'
+        required: true
+
+jobs:
+  build-test-publish:
+    uses: customerio/gist-workflows/.github/workflows/release.yml@master
+    secrets: inherit
+    with:
+      version: ${{ github.event.inputs.version }}
